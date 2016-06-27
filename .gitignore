@@ -1,2 +1,7 @@
 t.*
 *.pyc
+test_*
+x
+xx
+r*
+*.txt
