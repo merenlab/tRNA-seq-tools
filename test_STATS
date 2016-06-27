@@ -1,0 +1,42 @@
+Number of pairs analyzed                	2500
+Prefix failed in read 1                 	0
+Prefix failed in read 2                 	0
+Prefix failed in both                   	0
+Passed prefix total                     	2500
+Failed prefix total                     	0
+Merged total                            	2377
+Complete overlap forced total           	1053
+Merge failed total                      	123
+Merge discarded due to P                	73
+Merge discarded due to Ns               	50
+Merge discarded due to Q30              	0
+Pairs discarded due to min expected overlap	0
+Num mismatches found in merged reads    	928
+Mismatches recovered from read 1        	805
+Mismatches recovered from read 2        	123
+Mismatches replaced with N              	0
+
+
+Mismatches breakdown:
+
+0	1833
+1	329
+2	128
+3	46
+4	25
+5	5
+6	4
+7	1
+8	5
+9	1
+
+
+Command line                            	/groups/merenlab/SRC/PYTHON/python-2.7.11-PYTHON-BUILD-02/bin/iu-merge-pairs test.ini --retain-only-overlap --marker-gene-stringent
+Work directory                          	/groups/merenlab/scui/test
+"p" value                               	0.300000
+Min overlap size                        	15
+Min Q-score for mismatches              	15
+Ns ignored?                             	False
+Q30 enforced?                           	False
+Run with stringent flag on?             	True
+Requested only the overlapping part to be retained?	True
