@@ -1,7 +1,12 @@
 t.*
 *.pyc
+
 test_*
-x
-xx
+!test_MERGED_FINAL
+
+sort*
+!sort
+
+x*
 r*
 *.txt
