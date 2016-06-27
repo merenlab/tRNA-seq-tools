@@ -264,10 +264,26 @@ class Sorter:
                         "}").format(row[2])
                     tabfile_writer.writerow(row)
         
-
+        self.write_sorted()
         self.stats.write_stats("sort_stats")
         print "sort finished"
-    
+
+
+    def write_sorted(self):
+        sort_dict = {}
+        with open("tab_passed", "r") as temp_tabfile:  
+            temp_tabfile_reader = csv.reader(temp_tabfile, delimiter="\t")
+            for row in temp_tabfile_reader:
+                sort_dict[row[6]].append(row)
+        
+        with open("sort_tab_passed_sorted", "w") as tabfile:
+            tabfile_writer = csv.writer(tabfile, delimiter="\t")
+            for key, row in sorted(sort_dict):
+                row[1] = ("{:>" + str(max_no_trailer_length) + "}").format(row[1])
+                row[2] = ("{:>" + str(max_trailer_length) +
+                    "}").format(row[2])
+                tabfile_writer.writerow(row)
+        
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Sort tRNAs")
