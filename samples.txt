@@ -1,2 +1,0 @@
-sample	r1	r2
-test	r1	r2
