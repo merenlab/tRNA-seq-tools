@@ -5,8 +5,11 @@ test_*
 !test_MERGED_FINAL
 
 sort*
-!sort
+!sort_tRNA.py
 
 x*
 r*
 *.txt
+\\
+*.ini
+tab_passed
