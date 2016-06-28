@@ -6,13 +6,13 @@ import argparse
 import csv
 import Levenshtein as lev
 
-# commit to github change
 
 class SorterStats:
     def __init__(self):
         self.total_seqs = 0
         self.total_rejected = 0
         self.total_passed = 0
+        self.num_trailer = 0
         self.total_full_length = 0
 
         self.no_divergence = 0
@@ -32,6 +32,8 @@ class SorterStats:
         self.both_rejected = 0
         self.short_rejected = 0
 
+       
+
     def format_line(self, label, value, level, padding = 55):
         levels_dict = {1:"%s%s\t%s\n" % 
             (label, " " + " " * (padding - len(label)), value),
@@ -47,6 +49,8 @@ class SorterStats:
                 self.total_seqs,1))
             outfile.write(self.format_line("Total full-length", "%d" %
                 self.total_full_length, 1))
+            outfile.write(self.format_line("With trailer", "%d" %
+                self.num_trailer, 1))
             outfile.write(self.format_line("Total passed", "%d" % 
                 self.total_passed, 1))
 
@@ -96,7 +100,7 @@ class SeqSpecs:
         self.full_length = False
         self.t_loop_seq = ""
         self.acceptor_seq = ""
-        self.five_trailer = ""
+        self.three_trailer = ""
         self.no_trailer_length = 0
         self.trailer_length = 0
 
@@ -113,13 +117,13 @@ class SeqSpecs:
             mod_id_list.append("full length: Maybe")
         mod_id_list.append("t_loop:" + self.t_loop_seq)
         mod_id_list.append("acceptor:" + self.acceptor_seq)
-        mod_id_list.append("5_trailer:" + self.five_trailer)
+        mod_id_list.append("5_trailer:" + self.three_trailer)
         return "|".join(mod_id_list)
 
     def write_specs(self, writer, id):
-        writer.writerow([id, self.seq, self.five_trailer, self.t_loop_seq,
+        writer.writerow([id, self.seq, self.three_trailer, self.t_loop_seq,
             self.acceptor_seq, str(self.full_length),
-            str(self.length)])
+            str(self.length), str(self.trailer_length)])
 
 class Sorter:
     def __init__(self, args):
@@ -198,11 +202,11 @@ class Sorter:
                         self.stats.total_full_length += 1
                         cur_seq_specs.full_length = True
                 
-                # split 5_trailer
+                # split 3_trailer
                 cur_seq_specs.seq = seq[:(length - i)]
-                cur_seq_specs.five_trailer = seq[(length - i):]
+                cur_seq_specs.three_trailer = seq[(length - i):]
                 cur_seq_specs.no_trailer_length = len(cur_seq_specs.seq)
-                cur_seq_specs.trailer_length = len(cur_seq_specs.five_trailer)
+                cur_seq_specs.trailer_length = len(cur_seq_specs.three_trailer)
 
                 res_tup = (True, cur_seq_specs)
                 return res_tup
@@ -220,24 +224,24 @@ class Sorter:
         res_tup = (False, cur_seq_specs)
         return res_tup
 
+    #def check_handle_pass_seq(self):
+        
 
     def run(self):
         print "sort started"
         temp_tabfile = open("tab_passed", "w+")
         spec_writer = csv.writer(temp_tabfile, delimiter="\t")
-        spec_writer.writerow(["ID", "Seq", "5-trailer", "t-loop",
-            "acceptor", "full-length", "Seq length"])
+        spec_writer.writerow(["ID", "   Seq ", "3-trailer", "t-loop",
+            "acceptor", "full-length", "Seq length", "Trailer length"])
         max_no_trailer_length = 0
         max_trailer_length = 0
-
+        
+        # while loop writes outputs sort_passed, sort_failed and the temp
+        # tab_passed files
         while self.read_fasta.next():
             self.stats.total_seqs += 1
             is_tRNA_result = self.is_tRNA(self.read_fasta.seq.upper())
           
-           #inserted exit statement to make sure I'm only looking at one
-           #sequence  
-           #exit(1)
-
             mod_id = is_tRNA_result[1].gen_id_string(
                 self.read_fasta.id.split('|')[0]) 
             if is_tRNA_result[0]:
@@ -253,37 +257,60 @@ class Sorter:
                 self.rejected_seqs_write_fasta.write_id(mod_id)
                 self.rejected_seqs_write_fasta.write_seq(is_tRNA_result[1].seq)
         temp_tabfile.close()
-        print max_no_trailer_length
-        print max_trailer_length
-        with open("sort_tab_passed", "w") as tabfile:
+        
+        tabfile = open("sort_tab_passed", "w")
+        trailer_tabfile = open("sort_tab_trailer", "w")
+
+        with open("tab_passed", "r") as temp_tabfile:
+            temp_tabfile_reader = csv.reader(temp_tabfile, delimiter="\t")
             tabfile_writer = csv.writer(tabfile, delimiter="\t")
-            with open("tab_passed", "r") as temp_tabfile: 
-                temp_tabfile_reader = csv.reader(temp_tabfile, delimiter="\t")
-                for row in temp_tabfile_reader:
-                    row[1] = ("{:>" + str(max_no_trailer_length) + "}").format(row[1])
+            trailer_tabfile_writer = csv.writer(trailer_tabfile, delimiter="\t")
+            row_count = 0
+            trailer_count = 0
+
+            for row in temp_tabfile_reader:
+                row[1] = ("{:>" + str(max_no_trailer_length) + "}").format(row[1])
+                if row_count == 0:
                     row[2] = ("{:>" + str(max_trailer_length) +
                         "}").format(row[2])
                     tabfile_writer.writerow(row)
-        
-        self.write_sorted()
+                    trailer_tabfile_writer.writerow(row)
+                else:
+                    if row[7] == "0":
+                        tabfile_writer.writerow(row)   
+                    else:
+                        row[2] = ("{:>" + str(max_trailer_length) +
+                            "}").format(row[2])
+                        trailer_tabfile_writer.writerow(row)
+                        trailer_count += 1
+                row_count += 1
+
+        tabfile.close()
+        trailer_tabfile.close()
+       
+        self.stats.num_trailer = trailer_count
+
+        os.remove("tab_passed") 
+       #self.write_sorted()
         self.stats.write_stats("sort_stats")
         print "sort finished"
 
 
-    def write_sorted(self):
-        sort_dict = {}
-        with open("tab_passed", "r") as temp_tabfile:  
-            temp_tabfile_reader = csv.reader(temp_tabfile, delimiter="\t")
-            for row in temp_tabfile_reader:
-                sort_dict[row[6]].append(row)
+    #def write_sorted(self):
+        #sort_dict = {}
+        #with open("tab_passed", "r") as temp_tabfile:  
+            #temp_tabfile_reader = csv.reader(temp_tabfile, delimiter="\t")
+            #for row in temp_tabfile_reader:
+                #if 
+                #sort_dict[row[6]] = [row]
         
-        with open("sort_tab_passed_sorted", "w") as tabfile:
-            tabfile_writer = csv.writer(tabfile, delimiter="\t")
-            for key, row in sorted(sort_dict):
-                row[1] = ("{:>" + str(max_no_trailer_length) + "}").format(row[1])
-                row[2] = ("{:>" + str(max_trailer_length) +
-                    "}").format(row[2])
-                tabfile_writer.writerow(row)
+        #with open("sort_tab_passed_sorted", "w") as tabfile:
+            #tabfile_writer = csv.writer(tabfile, delimiter="\t")
+            #for key, row in sorted(sort_dict):
+                #row[1] = ("{:>" + str(max_no_trailer_length) + "}").format(row[1])
+                #row[2] = ("{:>" + str(max_trailer_length) +
+                    #"}").format(row[2])
+                #tabfile_writer.writerow(row)
         
 
 if __name__ == '__main__':
