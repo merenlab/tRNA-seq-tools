@@ -1,6 +1,5 @@
 import os 
 import sys
-import fnmatch
 import Oligotyping.lib.fastalib as u 
 import argparse
 import csv
@@ -323,26 +322,27 @@ class Sorter:
         self.stats.num_trailer = trailer_count
 
         os.remove("tab_passed") 
-       #self.write_sorted()
+        self.write_sorted("sort_tab_passed", fieldnames)
+        self.write_sorted("sort_tab_trailer", fieldnames)
         self.stats.write_stats("sort_stats")
         print "sort finished"
 
 
-    #def write_sorted(self):
-        #sort_dict = {}
-        #with open("tab_passed", "r") as temp_tabfile:  
-            #temp_tabfile_reader = csv.reader(temp_tabfile, delimiter="\t")
-            #for row in temp_tabfile_reader:
-                #if 
-                #sort_dict[row[6]] = [row]
-        
-        #with open("sort_tab_passed_sorted", "w") as tabfile:
-            #tabfile_writer = csv.writer(tabfile, delimiter="\t")
-            #for key, row in sorted(sort_dict):
-                #row[1] = ("{:>" + str(max_seq_width) + "}").format(row[1])
-                #row[2] = ("{:>" + str(max_3_trailer_width) +
-                    #"}").format(row[2])
-                #tabfile_writer.writerow(row)
+    def write_sorted(self, readfile, fieldnames):
+        sort_list = []
+        with open(readfile, "r") as temp_tabfile:  
+            temp_tabfile_reader = csv.DictReader(temp_tabfile, delimiter="\t")
+            for row in temp_tabfile_reader:
+                sort_list.append(row)
+
+        sort_list.sort(key=lambda dict: dict["Seq length"], reverse=True)
+       
+        writefile = readfile + "_sorted"
+        with open(writefile, "w") as tabfile:
+            tabfile_writer = csv.DictWriter(tabfile, fieldnames=fieldnames, delimiter="\t")
+            tabfile_writer.writerows(sort_list)
+
+        os.remove(readfile)
         
 
 if __name__ == '__main__':
