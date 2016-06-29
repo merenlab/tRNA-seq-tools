@@ -236,14 +236,7 @@ class Sorter:
         spec_writer = csv.DictWriter(temp_tabfile, fieldnames=fieldnames, 
             delimiter="\t")
         spec_writer.writeheader()
-        max_id_width = len(fieldnames[0])
         max_seq_width = len(fieldnames[1])
-        max_3_trailer_width = len(fieldnames[2])
-        max_t_loop_width = len(fieldnames[3])
-        max_acceptor_width = len(fieldnames[4])
-        max_full_length_width = len(fieldnames[5])
-        max_seq_length_width = len(fieldnames[6])
-        max_trailer_length_width = len(fieldnames[7])
         
         
         # while loop writes outputs sort_passed, sort_failed and the temp
@@ -262,14 +255,8 @@ class Sorter:
                 is_tRNA_result[1].write_specs(spec_writer, 
                     self.read_fasta.id.split('|')[0])
 
-                if len(self.read_fasta.id.split('|')[0]) > max_id_width:
-                    max_id_width = len(self.read_fasta.id.split('|')[0])
                 if len(is_tRNA_result[1].seq) > max_seq_width:
                     max_seq_width = len(is_tRNA_result[1].seq)
-                if len(is_tRNA_result[1].three_trailer) > max_3_trailer_width:
-                    max_3_trailer_width = len(is_tRNA_result[1].three_trailer)
-                if len(is_tRNA_result[1].t_loop_seq) > max_t_loop_width:
-                    max_t_loop_width = len(is_tRNA_result[1].t_loop_seq)
                 
             else:
                 self.rejected_seqs_write_fasta.write_id(mod_id)
@@ -291,25 +278,8 @@ class Sorter:
             trailer_count = 0
 
             for row in temp_tabfile_reader:
-                row["ID"] = ("{:>" + str(max_id_width) +
-                    "}").format(row["ID"])
-                row["Seq"] = ("{:>" + str(max_seq_width) +
-                    "}").format(row["Seq"])
-                row["3-trailer"] = ("{:>" + str(max_3_trailer_width) +
-                    "}").format(row["3-trailer"])
-                row["t-loop"] = ("{:>" + str(max_t_loop_width) +
-                    "}").format(row["t-loop"])
-                row["acceptor"] = ("{:>" + str(max_acceptor_width) +
-                    "}").format(row["acceptor"])
-                row["full-length"] = ("{:>" + str(max_full_length_width) +
-                    "}").format(row["full-length"])
-                row["Seq length"] = ("{:>" + str(max_seq_length_width) +
-                    "}").format(row["Seq length"])
-                row["Trailer length"] = ("{:>" + str(max_trailer_length_width) +
-                    "}").format(row["Trailer length"])
-
-                if row["Trailer length"] == ("{:>" + str(max_trailer_length_width) +
-                    "}").format("0"):
+                row["Seq"] = ("-" * (max_seq_width - int(row["Seq length"]))) + row["Seq"]
+                if row["Trailer length"] == "0":
                     tabfile_writer.writerow(row)   
                 else:
                     trailer_tabfile_writer.writerow(row)
