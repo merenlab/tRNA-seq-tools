@@ -131,7 +131,6 @@ class Sorter:
         self.read_fasta = u.SequenceSource(args.readfile)
         self.passed_seqs_write_fasta = u.FastaOutput("sort_passed")
         self.rejected_seqs_write_fasta = u.FastaOutput("sort_failed")
-
        #self.passed_seqs_write_fasta = u.FastaOutput(args.passed_writefile)
        #self.rejected_seqs_write_fasta = u.FastaOutput(args.rejected_writefile)
    
@@ -293,8 +292,9 @@ class Sorter:
         self.stats.num_trailer = trailer_count
 
         os.remove("tab_passed") 
-        self.write_sorted("sort_tab_passed", fieldnames)
-        self.write_sorted("sort_tab_trailer", fieldnames)
+        if args.length_sort:
+            self.write_sorted("sort_tab_passed", fieldnames)
+            self.write_sorted("sort_tab_trailer", fieldnames)
         self.stats.write_stats("sort_stats")
         print "sort finished"
 
@@ -320,13 +320,18 @@ class Sorter:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Sort tRNAs")
     parser.add_argument("readfile", help="name of read file")
+    parser.add_argument("-s", "--length_sort", help="sort sequences based on length (excluding trailer)", 
+        action="store_true")
     # parser.add_argument("passed_writefile", 
         # help="name of write file for passed sequences")
     # parser.add_argument("rejected_writefile", 
         # help="name of write file for rejected sequences")
 
     args = parser.parse_args()
- 
+    
+    if args.length_sort:
+        print "length sorting turned on"
+
     try:
         sorter = Sorter(args)
         sorter.run()
