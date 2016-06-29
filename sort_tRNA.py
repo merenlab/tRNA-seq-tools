@@ -309,7 +309,8 @@ class Sorter:
                 row["Trailer length"] = ("{:>" + str(max_trailer_length_width) +
                     "}").format(row["Trailer length"])
 
-                if row["Trailer length"] == "0":
+                if row["Trailer length"] == ("{:>" + str(max_trailer_length_width) +
+                    "}").format("0"):
                     tabfile_writer.writerow(row)   
                 else:
                     trailer_tabfile_writer.writerow(row)
