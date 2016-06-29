@@ -122,7 +122,7 @@ class SeqSpecs:
         temp_dict = {"ID" : id, "Seq" : self.seq, "3-trailer" :
             self.three_trailer, "t-loop" : self.t_loop_seq, "acceptor" :
             self.acceptor_seq, "full-length" : str(self.full_length), 
-            "Seq length" : str(self.length), "Trailer length" :
+            "Seq_length" : str(self.length), "Trailer_length" :
             str(self.trailer_length)}
         writer.writerow(temp_dict) 
 
@@ -232,7 +232,7 @@ class Sorter:
         print "sort started"
         temp_tabfile = open("tab_passed", "w")
         fieldnames = ["ID", "Seq", "3-trailer", "t-loop", "acceptor",
-            "full-length", "Seq length", "Trailer length"]
+            "full-length", "Seq_length", "Trailer_length"]
         spec_writer = csv.DictWriter(temp_tabfile, fieldnames=fieldnames, 
             delimiter="\t")
         spec_writer.writeheader()
@@ -278,8 +278,9 @@ class Sorter:
             trailer_count = 0
 
             for row in temp_tabfile_reader:
-                row["Seq"] = ("-" * (max_seq_width - int(row["Seq length"]))) + row["Seq"]
-                if row["Trailer length"] == "0":
+                row["Seq"] = ("-" * (max_seq_width - int(row["Seq_length"]))) + row["Seq"]
+                if row["Trailer_length"] == "0":
+                    row["3-trailer"] = "-"
                     tabfile_writer.writerow(row)   
                 else:
                     trailer_tabfile_writer.writerow(row)
@@ -305,7 +306,7 @@ class Sorter:
             for row in temp_tabfile_reader:
                 sort_list.append(row)
 
-        sort_list.sort(key=lambda dict: dict["Seq length"], reverse=True)
+        sort_list.sort(key=lambda dict: dict["Seq_length"], reverse=True)
        
         writefile = readfile + "_sorted"
         with open(writefile, "w") as tabfile:
