@@ -340,6 +340,7 @@ class Sorter:
         writefile = readfile + "_sorted"
         with open(writefile, "w") as tabfile:
             tabfile_writer = csv.DictWriter(tabfile, fieldnames=fieldnames, delimiter="\t")
+            tabfile_writer.writeheader()
             tabfile_writer.writerows(sort_list)
 
         os.remove(readfile)
