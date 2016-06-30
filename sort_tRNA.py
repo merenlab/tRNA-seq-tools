@@ -230,46 +230,10 @@ class Sorter:
         res_tup = (False, cur_seq_specs)
         return res_tup
 
-        
-
-    def run(self):
-        print "sort started"
-        temp_tabfile = open("tab_passed", "w")
-        fieldnames = ["ID", "Seq", "3-trailer", "t-loop", "acceptor",
-            "full-length", "Seq_length", "Trailer_length"]
-        spec_writer = csv.DictWriter(temp_tabfile, fieldnames=fieldnames, 
-            delimiter="\t")
-        spec_writer.writeheader()
-        max_seq_width = len(fieldnames[1])
-        
-        
-        # while loop writes outputs sort_passed, sort_failed and the temp
-        # tab_passed files
-        while self.read_fasta.next():
-            self.stats.total_seqs += 1
-            is_tRNA_result = self.is_tRNA(self.read_fasta.seq.upper())
-             
-
-
-            mod_id = is_tRNA_result[1].gen_id_string(
-                self.read_fasta.id.split('|')[0]) 
-            if is_tRNA_result[0]:
-                self.passed_seqs_write_fasta.write_id(mod_id)
-                self.passed_seqs_write_fasta.write_seq(is_tRNA_result[1].seq)
-                is_tRNA_result[1].write_specs(spec_writer, 
-                    self.read_fasta.id.split('|')[0])
-
-                if len(is_tRNA_result[1].seq) > max_seq_width:
-                    max_seq_width = len(is_tRNA_result[1].seq)
-                
-            else:
-                self.rejected_seqs_write_fasta.write_id(mod_id)
-                self.rejected_seqs_write_fasta.write_seq(is_tRNA_result[1].seq)
-        temp_tabfile.close()
-        
+    def fix_spacing_csv(self, fieldnames, max_seq_width): 
         tabfile = open("sort_tab_passed", "w")
         trailer_tabfile = open("sort_tab_trailer", "w")
-
+       
         with open("tab_passed", "r") as temp_tabfile:
             temp_tabfile_reader = csv.DictReader(temp_tabfile, delimiter="\t")
             tabfile_writer = csv.DictWriter(tabfile, fieldnames=fieldnames,
@@ -278,7 +242,6 @@ class Sorter:
                 fieldnames=fieldnames, delimiter="\t")
             tabfile_writer.writeheader()
             trailer_tabfile_writer.writeheader()
-            row_count = 0
             trailer_count = 0
 
             for row in temp_tabfile_reader:
@@ -289,14 +252,47 @@ class Sorter:
                 else:
                     trailer_tabfile_writer.writerow(row)
                     trailer_count += 1
-                row_count += 1
 
         tabfile.close()
         trailer_tabfile.close()
        
         self.stats.num_trailer = trailer_count
+        os.remove("tab_passed")
 
-        os.remove("tab_passed") 
+
+    def run(self):
+        print "sort started"
+        fieldnames = ["ID", "Seq", "3-trailer", "t-loop", "acceptor",
+            "full-length", "Seq_length", "Trailer_length"]
+        max_seq_width = len(fieldnames[1])
+
+        with open("tab_passed", "w") as temp_tabfile:
+            spec_writer = csv.DictWriter(temp_tabfile, fieldnames=fieldnames, 
+                delimiter="\t")
+            spec_writer.writeheader()
+        
+            # while loop writes outputs sort_passed, sort_failed and the temp
+            # tab_passed files
+            while self.read_fasta.next():
+                self.stats.total_seqs += 1
+                is_tRNA_result = self.is_tRNA(self.read_fasta.seq.upper())
+             
+                mod_id = is_tRNA_result[1].gen_id_string(
+                    self.read_fasta.id.split('|')[0]) 
+                if is_tRNA_result[0]:
+                    self.passed_seqs_write_fasta.write_id(mod_id)
+                    self.passed_seqs_write_fasta.write_seq(is_tRNA_result[1].seq)
+                    is_tRNA_result[1].write_specs(spec_writer, 
+                        self.read_fasta.id.split('|')[0])
+
+                    if len(is_tRNA_result[1].seq) > max_seq_width:
+                        max_seq_width = len(is_tRNA_result[1].seq)
+                else:
+                    self.rejected_seqs_write_fasta.write_id(mod_id)
+                    self.rejected_seqs_write_fasta.write_seq(is_tRNA_result[1].seq)
+       
+        self.fix_spacing_csv(fieldnames, max_seq_width)
+
         if args.length_sort:
             self.write_sorted("sort_tab_passed", fieldnames)
             self.write_sorted("sort_tab_trailer", fieldnames)
