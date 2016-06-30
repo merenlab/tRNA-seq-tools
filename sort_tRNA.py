@@ -135,6 +135,49 @@ class Sorter:
        #self.rejected_seqs_write_fasta = u.FastaOutput(args.rejected_writefile)
    
         self.stats = SorterStats()
+    
+    
+    def handle_pass_seq(self, cur_seq_specs, i):
+        self.stats.total_passed += 1
+        
+         # checking divergence at specific positions
+        if cur_seq_specs.t_loop_error:
+            self.stats.t_loop_divergence += 1
+            if cur_seq_specs.seq_sub[0] != "G":
+                self.stats.div_at_0 += 1
+            elif cur_seq_specs.seq_sub[1] != "T":
+                self.stats.div_at_1 += 1
+            elif cur_seq_specs.seq_sub[2] != "T":
+                self.stats.div_at_2 += 1
+            elif cur_seq_specs.seq_sub[3] != "C":
+                self.stats.div_at_3 += 1
+            elif cur_seq_specs.seq_sub[8] != "C":
+                self.stats.div_at_8 += 1
+        elif cur_seq_specs.acceptor_error:
+            self.stats.acceptor_divergence += 1
+            if cur_seq_specs.seq_sub[-3] != "C":
+                self.stats.div_at_neg_3 += 1
+            elif cur_seq_specs.seq_sub[-2] != "C":
+                self.stats.div_at_neg_2 += 1
+            elif cur_seq_specs.seq_sub[-1] != "A":
+                self.stats.div_at_neg_1 += 1
+        else:
+            self.stats.no_divergence += 1
+
+        # full-length id
+        if cur_seq_specs.length > 70 and cur_seq_specs.length < 100:
+            if cur_seq_specs.seq[7] == "T" and cur_seq_specs.seq[13] == "A":
+                self.stats.total_full_length += 1
+                cur_seq_specs.full_length = True
+
+        # split 3_trailer
+        full_seq = cur_seq_specs.seq
+        cur_seq_specs.seq = full_seq[:(cur_seq_specs.length - i)]
+        cur_seq_specs.three_trailer = full_seq[(cur_seq_specs.length - i):]
+        cur_seq_specs.length = len(cur_seq_specs.seq)
+        cur_seq_specs.trailer_length = len(cur_seq_specs.three_trailer)
+
+        return cur_seq_specs
 
 
     def is_tRNA(self, seq):
@@ -151,7 +194,7 @@ class Sorter:
                 + lev.distance("C", sub_str[8]))
             acceptor_dist = lev.distance("CCA", sub_str[-3:])
             mis_count = t_loop_dist + acceptor_dist
-            
+           
             if t_loop_dist < 1:    
                 t_loop_error = False
             else:
@@ -169,45 +212,8 @@ class Sorter:
                 cur_seq_specs.seq_sub = sub_str
                 cur_seq_specs.t_loop_seq = t_loop_seq
                 cur_seq_specs.acceptor_seq = acceptor_seq
-            if mis_count < 2:   
-                self.stats.total_passed += 1
-                
-                # checking divergence at specific positions
-                if cur_seq_specs.t_loop_error:
-                    self.stats.t_loop_divergence += 1
-                    if sub_str[0] != "G":
-                        self.stats.div_at_0 += 1
-                    elif sub_str[1] != "T":
-                        self.stats.div_at_1 += 1
-                    elif sub_str[2] != "T":
-                        self.stats.div_at_2 += 1
-                    elif sub_str[3] != "C":
-                        self.stats.div_at_3 += 1
-                    elif sub_str[8] != "C":
-                        self.stats.div_at_8 += 1
-                elif cur_seq_specs.acceptor_error:
-                    self.stats.acceptor_divergence += 1
-                    if sub_str[-3] != "C":
-                        self.stats.div_at_neg_3 += 1
-                    elif sub_str[-2] != "C":
-                        self.stats.div_at_neg_2 += 1
-                    elif sub_str[-1] != "A":
-                        self.stats.div_at_neg_1 += 1
-                else:
-                    self.stats.no_divergence += 1
-
-                # full-length id
-                if length > 70 and length < 100:
-                    if seq[7] == "T" and seq[13] == "A":
-                        self.stats.total_full_length += 1
-                        cur_seq_specs.full_length = True
-                
-                # split 3_trailer
-                cur_seq_specs.seq = seq[:(length - i)]
-                cur_seq_specs.three_trailer = seq[(length - i):]
-                cur_seq_specs.length = len(cur_seq_specs.seq)
-                cur_seq_specs.trailer_length = len(cur_seq_specs.three_trailer)
-
+            if mis_count < 2:
+                cur_seq_specs = self.handle_pass_seq(cur_seq_specs, i)
                 res_tup = (True, cur_seq_specs)
                 return res_tup
 
@@ -224,7 +230,6 @@ class Sorter:
         res_tup = (False, cur_seq_specs)
         return res_tup
 
-    #def check_handle_pass_seq(self):
         
 
     def run(self):
