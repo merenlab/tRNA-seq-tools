@@ -3,6 +3,7 @@ t.*
 
 test_*
 !test_MERGED_FINAL
+!test_sort_tRNA.py
 
 sort*
 !sort_tRNA.py
