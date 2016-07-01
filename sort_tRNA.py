@@ -127,20 +127,15 @@ class SeqSpecs:
         writer.writerow(temp_dict) 
 
 class Sorter:
-    def __init__(self, args):
-        self.read_fasta = u.SequenceSource(args.readfile)
+    def __init__(self):
         self.passed_seqs_write_fasta = u.FastaOutput("sort_passed")
         self.rejected_seqs_write_fasta = u.FastaOutput("sort_failed")
        #self.passed_seqs_write_fasta = u.FastaOutput(args.passed_writefile)
        #self.rejected_seqs_write_fasta = u.FastaOutput(args.rejected_writefile)
    
         self.stats = SorterStats()
-    
-    
-    def handle_pass_seq(self, cur_seq_specs, i):
-        self.stats.total_passed += 1
-        
-         # checking divergence at specific positions
+
+    def check_divergence_pos(self, cur_seq_specs):
         if cur_seq_specs.t_loop_error:
             self.stats.t_loop_divergence += 1
             if cur_seq_specs.seq_sub[0] != "G":
@@ -164,19 +159,29 @@ class Sorter:
         else:
             self.stats.no_divergence += 1
 
-        # full-length id
+
+    def check_full_length(self, cur_seq_specs):
         if cur_seq_specs.length > 70 and cur_seq_specs.length < 100:
             if cur_seq_specs.seq[7] == "T" and cur_seq_specs.seq[13] == "A":
                 self.stats.total_full_length += 1
                 cur_seq_specs.full_length = True
+        return cur_seq_specs
 
-        # split 3_trailer
+
+    def split_3_trailer(self, cur_seq_specs, i):
         full_seq = cur_seq_specs.seq
         cur_seq_specs.seq = full_seq[:(cur_seq_specs.length - i)]
         cur_seq_specs.three_trailer = full_seq[(cur_seq_specs.length - i):]
         cur_seq_specs.length = len(cur_seq_specs.seq)
         cur_seq_specs.trailer_length = len(cur_seq_specs.three_trailer)
+        return cur_seq_specs
 
+
+    def handle_pass_seq(self, cur_seq_specs, i):
+        self.stats.total_passed += 1
+        self.check_divergence_pos(cur_seq_specs)
+        cur_seq_specs = self.check_full_length(cur_seq_specs)
+        cur_seq_specs = self.split_3_trailer(cur_seq_specs, i)
         return cur_seq_specs
 
 
@@ -260,8 +265,9 @@ class Sorter:
         os.remove("tab_passed")
 
 
-    def run(self):
+    def run(self, args):
         print "sort started"
+        read_fasta = u.SequenceSource(args.readfile)
         fieldnames = ["ID", "Seq", "3-trailer", "t-loop", "acceptor",
             "full-length", "Seq_length", "Trailer_length"]
         max_seq_width = len(fieldnames[1])
@@ -273,17 +279,17 @@ class Sorter:
         
             # while loop writes outputs sort_passed, sort_failed and the temp
             # tab_passed files
-            while self.read_fasta.next():
+            while read_fasta.next():
                 self.stats.total_seqs += 1
-                is_tRNA_result = self.is_tRNA(self.read_fasta.seq.upper())
+                is_tRNA_result = self.is_tRNA(read_fasta.seq.upper())
              
                 mod_id = is_tRNA_result[1].gen_id_string(
-                    self.read_fasta.id.split('|')[0]) 
+                    read_fasta.id.split('|')[0]) 
                 if is_tRNA_result[0]:
                     self.passed_seqs_write_fasta.write_id(mod_id)
                     self.passed_seqs_write_fasta.write_seq(is_tRNA_result[1].seq)
                     is_tRNA_result[1].write_specs(spec_writer, 
-                        self.read_fasta.id.split('|')[0])
+                        read_fasta.id.split('|')[0])
 
                     if len(is_tRNA_result[1].seq) > max_seq_width:
                         max_seq_width = len(is_tRNA_result[1].seq)
@@ -334,8 +340,8 @@ if __name__ == '__main__':
         print "length sorting turned on"
 
     try:
-        sorter = Sorter(args)
-        sorter.run()
+        sorter = Sorter()
+        sorter.run(args)
     except:
         exit(1)
 
