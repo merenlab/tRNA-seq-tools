@@ -9,6 +9,7 @@ import sort_tRNA as sort
 class SortTestCase(ut.TestCase):
     def setUp(self):
         self.sorter = sort.Sorter()
+        self.maxDiff = None
 
     def test_pass_is_tRNA(self):
         result = self.sorter.is_tRNA("AACCGTTGAACTGAAAGGTTCCTGGGGTTCGAATCCCCATCTCTCCGCCA")
@@ -19,7 +20,16 @@ class SortTestCase(ut.TestCase):
         self.assertFalse(result[0])
 
     def test_stats_file(self):
-        with open(")
+        with open("sort_stats_gold") as gold_file:
+            with open("../sort_stats") as test_file:
+                gold_lines = gold_file.readlines()
+                test_lines = test_file.readlines()
+                self.assertEqual(gold_lines, test_lines)
+                #length = len(gold_lines)
+                #for i in range(length):
+                    #self.assertEqual(gold_lines[i], test_lines[i])
+                
+                    
 
 if __name__ == "__main__":
     suite = ut.TestLoader().loadTestsFromTestCase(SortTestCase)
