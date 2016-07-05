@@ -10,6 +10,7 @@ class SortTestCase(ut.TestCase):
     def setUp(self):
         self.sorter = sort.Sorter()
         self.maxDiff = None
+        self.cur_specs = sort.SeqSpecs()
 
     def test_pass_is_tRNA(self):
         result = self.sorter.is_tRNA("AACCGTTGAACTGAAAGGTTCCTGGGGTTCGAATCCCCATCTCTCCGCCA")
@@ -18,6 +19,24 @@ class SortTestCase(ut.TestCase):
     def test_fail_is_tRNA(self):
         result = self.sorter.is_tRNA("GAGTACCAAGATCGGAAGAGCACACGTCTAGTTCTACAGTCCGACGATCATCCTTTGG")
         self.assertFalse(result[0])
+
+    def test_pass_check_full_length(self):
+        self.cur_specs.seq = "GCGCGAGTGGCTCAGGGGTGGAGCACCACCTTGCCAAGGTGGGGGCCGCGGGTTCGAATCCCGTCTCGCGCTCCA"
+        self.cur_specs.length = len(self.cur_specs.seq)
+        cur_specs_res = self.sorter.check_full_length(self.cur_specs)
+        self.assertTrue(cur_specs_res.full_length)
+
+    def test_fail_too_short_check_full_length(self):
+        self.cur_specs.seq = "CTAGAGTTCAAATCTCCCTTCCGCTACCA"
+        self.cur_specs.length = len(self.cur_specs.seq)
+        cur_specs_res = self.sorter.check_full_length(self.cur_specs)
+        self.assertFalse(cur_specs_res.full_length)
+
+    def test_fail_no_match_check_full_length(self):
+        self.cur_specs.seq = "TGGTGGGTATAGCGCAGTTGGTTAGTGCGCCAGATTGTGGCTCTGGAGGCCGAGGGTTCGAATCCCTTTACCCACCCCA"
+        self.cur_specs.length = len(self.cur_specs.seq)
+        cur_specs_res = self.sorter.check_full_length(self.cur_specs)
+        self.assertFalse(cur_specs_res.full_length)
 
     def test_stats_file(self):
         with open("sort_stats_gold") as gold_file:
