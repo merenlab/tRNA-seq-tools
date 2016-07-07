@@ -268,6 +268,24 @@ class Sorter:
         self.stats.num_trailer = trailer_count
         os.remove("tab_passed")
 
+    def write_to_outputs(self, read_fasta, spec_writer):
+        self.stats.total_seqs += 1
+        is_tRNA_result = self.is_tRNA(read_fasta.seq.upper()) 
+        mod_id = is_tRNA_result[1].gen_id_string(
+            read_fasta.id.split('|')[0]) 
+
+        if is_tRNA_result[0]:
+            self.passed_seqs_write_fasta.write_id(mod_id)
+            self.passed_seqs_write_fasta.write_seq(is_tRNA_result[1].seq)
+            is_tRNA_result[1].write_specs(spec_writer, 
+                read_fasta.id.split('|')[0])
+
+            if len(is_tRNA_result[1].seq) > self.max_seq_width:
+                self.max_seq_width = len(is_tRNA_result[1].seq)
+        else:
+            self.rejected_seqs_write_fasta.write_id(mod_id)
+            self.rejected_seqs_write_fasta.write_seq(is_tRNA_result[1].seq)
+
 
     def run(self, args):
         print "sort started"
@@ -278,26 +296,9 @@ class Sorter:
                 delimiter="\t")
             spec_writer.writeheader()
         
-            # while loop writes outputs sort_passed, sort_failed and the temp
-            # tab_passed files
             while read_fasta.next():
-                self.stats.total_seqs += 1
-                is_tRNA_result = self.is_tRNA(read_fasta.seq.upper())
-             
-                mod_id = is_tRNA_result[1].gen_id_string(
-                    read_fasta.id.split('|')[0]) 
-                if is_tRNA_result[0]:
-                    self.passed_seqs_write_fasta.write_id(mod_id)
-                    self.passed_seqs_write_fasta.write_seq(is_tRNA_result[1].seq)
-                    is_tRNA_result[1].write_specs(spec_writer, 
-                        read_fasta.id.split('|')[0])
+                self.write_to_outputs(read_fasta, spec_writer)
 
-                    if len(is_tRNA_result[1].seq) > self.max_seq_width:
-                        self.max_seq_width = len(is_tRNA_result[1].seq)
-                else:
-                    self.rejected_seqs_write_fasta.write_id(mod_id)
-                    self.rejected_seqs_write_fasta.write_seq(is_tRNA_result[1].seq)
-       
         self.fix_spacing_csv()
 
         if args.length_sort:
