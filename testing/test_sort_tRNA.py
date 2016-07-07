@@ -38,16 +38,30 @@ class SortTestCase(ut.TestCase):
         cur_specs_res = self.sorter.check_full_length(self.cur_specs)
         self.assertFalse(cur_specs_res.full_length)
 
+    def test_split_3_trailer_with_trailer(self):
+        self.cur_specs.seq = "CTCCAGGTTCGAGTCCTGGTAGAACAACCAA"
+        self.cur_specs.length = len(self.cur_specs.seq)
+        cur_specs_res = self.sorter.split_3_trailer(self.cur_specs, 1)
+        self.assertEqual(cur_specs_res.seq, "CTCCAGGTTCGAGTCCTGGTAGAACAACCA")
+        self.assertEqual(cur_specs_res.three_trailer, "A")
+        self.assertEqual(cur_specs_res.length, 30)
+        self.assertEqual(cur_specs_res.trailer_length, 1)
+        
+    def test_split_3_trailer_without_trailer(self):
+        self.cur_specs.seq = "CTCCAGGTTCGAGTCCTGGTAGAACAACCA"
+        self.cur_specs.length = len(self.cur_specs.seq)
+        cur_specs_res = self.sorter.split_3_trailer(self.cur_specs, 0)
+        self.assertEqual(cur_specs_res.seq, "CTCCAGGTTCGAGTCCTGGTAGAACAACCA")
+        self.assertEqual(cur_specs_res.three_trailer, "")
+        self.assertEqual(cur_specs_res.length, 30)
+        self.assertEqual(cur_specs_res.trailer_length, 0)
+    
     def test_stats_file(self):
         with open("sort_stats_gold") as gold_file:
             with open("../sort_stats") as test_file:
                 gold_lines = gold_file.readlines()
                 test_lines = test_file.readlines()
                 self.assertEqual(gold_lines, test_lines)
-                #length = len(gold_lines)
-                #for i in range(length):
-                    #self.assertEqual(gold_lines[i], test_lines[i])
-                
                     
 
 if __name__ == "__main__":
