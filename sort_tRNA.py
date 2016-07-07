@@ -130,6 +130,10 @@ class Sorter:
     def __init__(self):
         self.passed_seqs_write_fasta = u.FastaOutput("sort_passed")
         self.rejected_seqs_write_fasta = u.FastaOutput("sort_failed")
+        self.fieldnames = ["ID", "Seq", "3-trailer", "t-loop", "acceptor",
+            "full-length", "Seq_length", "Trailer_length"]
+        self.max_seq_width = len(self.fieldnames[1])
+
        #self.passed_seqs_write_fasta = u.FastaOutput(args.passed_writefile)
        #self.rejected_seqs_write_fasta = u.FastaOutput(args.rejected_writefile)
    
@@ -235,22 +239,22 @@ class Sorter:
         res_tup = (False, cur_seq_specs)
         return res_tup
 
-    def fix_spacing_csv(self, fieldnames, max_seq_width): 
+    def fix_spacing_csv(self): 
         tabfile = open("sort_tab_passed", "w")
         trailer_tabfile = open("sort_tab_trailer", "w")
        
         with open("tab_passed", "r") as temp_tabfile:
             temp_tabfile_reader = csv.DictReader(temp_tabfile, delimiter="\t")
-            tabfile_writer = csv.DictWriter(tabfile, fieldnames=fieldnames,
+            tabfile_writer = csv.DictWriter(tabfile, fieldnames=self.fieldnames,
                 delimiter="\t")
             trailer_tabfile_writer = csv.DictWriter(trailer_tabfile,
-                fieldnames=fieldnames, delimiter="\t")
+                fieldnames=self.fieldnames, delimiter="\t")
             tabfile_writer.writeheader()
             trailer_tabfile_writer.writeheader()
             trailer_count = 0
 
             for row in temp_tabfile_reader:
-                row["Seq"] = ("-" * (max_seq_width - int(row["Seq_length"]))) + row["Seq"]
+                row["Seq"] = ("-" * (self.max_seq_width - int(row["Seq_length"]))) + row["Seq"]
                 if row["Trailer_length"] == "0":
                     row["3-trailer"] = "-"
                     tabfile_writer.writerow(row)   
@@ -268,12 +272,9 @@ class Sorter:
     def run(self, args):
         print "sort started"
         read_fasta = u.SequenceSource(args.readfile)
-        fieldnames = ["ID", "Seq", "3-trailer", "t-loop", "acceptor",
-            "full-length", "Seq_length", "Trailer_length"]
-        max_seq_width = len(fieldnames[1])
 
         with open("tab_passed", "w") as temp_tabfile:
-            spec_writer = csv.DictWriter(temp_tabfile, fieldnames=fieldnames, 
+            spec_writer = csv.DictWriter(temp_tabfile, fieldnames=self.fieldnames, 
                 delimiter="\t")
             spec_writer.writeheader()
         
@@ -291,22 +292,22 @@ class Sorter:
                     is_tRNA_result[1].write_specs(spec_writer, 
                         read_fasta.id.split('|')[0])
 
-                    if len(is_tRNA_result[1].seq) > max_seq_width:
-                        max_seq_width = len(is_tRNA_result[1].seq)
+                    if len(is_tRNA_result[1].seq) > self.max_seq_width:
+                        self.max_seq_width = len(is_tRNA_result[1].seq)
                 else:
                     self.rejected_seqs_write_fasta.write_id(mod_id)
                     self.rejected_seqs_write_fasta.write_seq(is_tRNA_result[1].seq)
        
-        self.fix_spacing_csv(fieldnames, max_seq_width)
+        self.fix_spacing_csv()
 
         if args.length_sort:
-            self.write_sorted("sort_tab_passed", fieldnames)
-            self.write_sorted("sort_tab_trailer", fieldnames)
+            self.write_sorted("sort_tab_passed")
+            self.write_sorted("sort_tab_trailer")
         self.stats.write_stats("sort_stats")
         print "sort finished"
 
 
-    def write_sorted(self, readfile, fieldnames):
+    def write_sorted(self, readfile):
         sort_list = []
         with open(readfile, "r") as temp_tabfile:  
             temp_tabfile_reader = csv.DictReader(temp_tabfile, delimiter="\t")
@@ -317,7 +318,7 @@ class Sorter:
        
         writefile = readfile + "_sorted"
         with open(writefile, "w") as tabfile:
-            tabfile_writer = csv.DictWriter(tabfile, fieldnames=fieldnames, delimiter="\t")
+            tabfile_writer = csv.DictWriter(tabfile, fieldnames=self.fieldnames, delimiter="\t")
             tabfile_writer.writeheader()
             tabfile_writer.writerows(sort_list)
 
