@@ -1,9 +1,21 @@
+# -*- coding: utf-8
+# pylint: disable=line-too-long
+"""Classes to deal with tRNA sequences."""
+
 import os 
-import sys
-import Oligotyping.lib.fastalib as u 
-import argparse
 import csv
 import Levenshtein as lev
+
+import Oligotyping.lib.fastalib as u 
+
+
+__author__ = "Steven Cui"
+__copyright__ = "Copyright 2016, The University of Chicago"
+__credits__ = []
+__license__ = "GPL 3.0"
+__version__ = 0.1
+__maintainer__ = "Steven Cui"
+__email__ = "stevencui729@gmail.com"
 
 
 class SorterStats:
@@ -384,25 +396,3 @@ class Sorter:
             self.write_sorted(self.trailer_tabfile)
         self.stats.write_stats(self.stats_write_file)
         print "sort finished"
-
-    
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Sort tRNAs")
-    parser.add_argument("readfile", help="name of read file")
-    parser.add_argument("-n", "--sample_name", help="sample name (to be used" +
-        " for naming output files")
-    parser.add_argument("-s", "--length_sort", help="sort sequences based on length (excluding trailer)", 
-        action="store_true")
-
-    args = parser.parse_args()
-    
-    if args.length_sort:
-        print "length sorting turned on"
-
-    try:
-        sorter = Sorter()
-        sorter.run(args)
-    except:
-        exit(1)
-
