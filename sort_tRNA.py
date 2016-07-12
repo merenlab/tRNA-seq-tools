@@ -47,7 +47,7 @@ class SorterStats:
 
 
     def write_stats(self, out_file_path):
-        """Writes statistics to an output file""" 
+        """Writes statistics to an output file.""" 
         with open(out_file_path, "w") as outfile:
             outfile.write(self.format_line("Total seqs", "%d" % 
                 self.total_seqs,1))
@@ -94,7 +94,10 @@ class SorterStats:
  
        
 class SeqSpecs:
+    """Class to store seq information during sort."""
+
     def __init__(self):
+        """Initializes seq information categories."""
         self.length = 0
         self.mis_count = 100
         self.t_loop_error = True
@@ -109,6 +112,7 @@ class SeqSpecs:
 
 
     def gen_id_string(self, id):
+        """Generates ID string for _PASSED and _FAILED files"""
         mod_id_list = []
         mod_id_list.append(id)
         mod_id_list.append("mismatches:" + str(self.mis_count))
@@ -126,6 +130,9 @@ class SeqSpecs:
 
 
     def write_specs(self, writer, id):
+        """Uses the passed in DictWriter to write to a csv output file
+        (_TAB_NO_TRAILER or _TAB_TRAILER).
+        """
         temp_dict = {"ID" : id, "Seq" : self.seq, "3-trailer" :
             self.three_trailer, "t-loop" : self.t_loop_seq, "acceptor" :
             self.acceptor_seq, "full-length" : str(self.full_length), 
@@ -135,7 +142,10 @@ class SeqSpecs:
 
 
 class Sorter:
+    """Class that handles the sorting of the seqs."""
+    
     def __init__(self):
+        """Initializes variables for input/output files and statistics."""
         self.passed_seqs_write_fasta = ""
         self.rejected_seqs_write_fasta = ""
         self.stats_write_file = ""
@@ -151,6 +161,9 @@ class Sorter:
 
 
     def set_file_names(self, args):
+        """Takes command line arguments from args and assigns input/output file
+        variables.
+        """
         self.passed_seqs_write_fasta = u.FastaOutput(args.sample_name +
             "_PASSED")
         self.rejected_seqs_write_fasta = u.FastaOutput(args.sample_name +
@@ -162,6 +175,9 @@ class Sorter:
 
 
     def check_divergence_pos(self, cur_seq_specs):
+        """Takes a SeqSpecs class and updates statistics on divergence
+        position.
+        """
         if cur_seq_specs.t_loop_error:
             self.stats.t_loop_divergence += 1
             if cur_seq_specs.seq_sub[0] != "G":
@@ -187,6 +203,9 @@ class Sorter:
 
 
     def check_full_length(self, cur_seq_specs):
+        """Takes a SeqSpecs class and checks whether or not the sequence is a
+        full-length sequence, returns an updated SeqSpecs class.
+        """
         if cur_seq_specs.length > 70 and cur_seq_specs.length < 100:
             if cur_seq_specs.seq[7] == "T" and cur_seq_specs.seq[13] == "A":
                 self.stats.total_full_length += 1
@@ -195,6 +214,9 @@ class Sorter:
 
 
     def split_3_trailer(self, cur_seq_specs, i):
+        """Takes a SeqSpecs class and splits the 3-trailer from the seqience,
+        returns an updated SeqSpecs class.
+        """
         full_seq = cur_seq_specs.seq
         cur_seq_specs.seq = full_seq[:(cur_seq_specs.length - i)]
         cur_seq_specs.three_trailer = full_seq[(cur_seq_specs.length - i):]
@@ -204,6 +226,9 @@ class Sorter:
 
 
     def handle_pass_seq(self, cur_seq_specs, i):
+        """Consdolidates all the methods run specifically for a confirmed passed
+        sequence.
+        """
         self.stats.total_passed += 1
         self.check_divergence_pos(cur_seq_specs)
         cur_seq_specs = self.check_full_length(cur_seq_specs)
@@ -212,11 +237,17 @@ class Sorter:
 
 
     def is_tRNA(self, seq):
+        """Takes a sequence and determines whether or not it matches the
+        criterion for being a tRNA
+        """
         length = len(seq)
         sub_size = 24
         t_loop_error = True
         acceptor_error = True
         cur_seq_specs = SeqSpecs()
+
+        # Start the sliding window at the last 24 bases, and move to the left
+        # one at a time
         for i in xrange(length - sub_size + 1):
             sub_str = seq[-(i + sub_size):(length - i)]
             t_loop_seq = sub_str[0:9]
@@ -247,7 +278,8 @@ class Sorter:
                 cur_seq_specs = self.handle_pass_seq(cur_seq_specs, i)
                 res_tup = (True, cur_seq_specs)
                 return res_tup
-
+        
+        # Handles a failed sequence
         if cur_seq_specs.t_loop_error and cur_seq_specs.acceptor_error:
             if length < 24:
                 self.stats.short_rejected += 1
@@ -262,7 +294,11 @@ class Sorter:
         return res_tup
 
 
-    def fix_spacing_csv(self): 
+    def fix_spacing_csv(self):
+        """Fixes spacing and indentation on the csv files (_TAB_NO_TRAILER and
+        _TAB_TRAILER)
+        """
+        # Declare and assign variables for output files
         tabfile = open(self.no_trailer_tabfile, "w")
         trailer_tabfile = open(self.trailer_tabfile, "w")
        
@@ -293,6 +329,7 @@ class Sorter:
 
 
     def write_to_outputs(self, spec_writer):
+        """Writes the sort results to output files."""
         self.stats.total_seqs += 1
         is_tRNA_result = self.is_tRNA(self.read_fasta.seq.upper()) 
         mod_id = is_tRNA_result[1].gen_id_string(
@@ -312,6 +349,7 @@ class Sorter:
     
 
     def write_sorted(self, readfile):
+        """Reads in csv files and rewrites them, sorted by seq length."""
         sort_list = []
         with open(readfile, "r") as temp_tabfile:  
             temp_tabfile_reader = csv.DictReader(temp_tabfile, delimiter="\t")
@@ -327,6 +365,7 @@ class Sorter:
     
 
     def run(self, args):
+        """Run the sorter."""
         print "sort started"
         self.set_file_names(args)
 
