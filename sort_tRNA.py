@@ -7,7 +7,10 @@ import Levenshtein as lev
 
 
 class SorterStats:
+    """This class handles keeping track of sort statistics."""
+
     def __init__(self):
+        """Initializes statistics."""
         self.total_seqs = 0
         self.total_rejected = 0
         self.total_passed = 0
@@ -30,10 +33,10 @@ class SorterStats:
         self.acceptor_seq_rejected = 0
         self.both_rejected = 0
         self.short_rejected = 0
-
        
 
     def format_line(self, label, value, level, padding = 55):
+        """Handles indenting/formatting lines for statistics."""
         levels_dict = {1:"%s%s\t%s\n" % 
             (label, " " + " " * (padding - len(label)), value),
             2:"\t%s%s\t%s\n" % 
@@ -42,7 +45,9 @@ class SorterStats:
                 (label, " " + " " * (padding - (12 + len(label))), value)}
         return levels_dict[level]
 
+
     def write_stats(self, out_file_path):
+        """Writes statistics to an output file""" 
         with open(out_file_path, "w") as outfile:
             outfile.write(self.format_line("Total seqs", "%d" % 
                 self.total_seqs,1))
@@ -102,6 +107,7 @@ class SeqSpecs:
         self.three_trailer = ""
         self.trailer_length = 0
 
+
     def gen_id_string(self, id):
         mod_id_list = []
         mod_id_list.append(id)
@@ -118,6 +124,7 @@ class SeqSpecs:
         mod_id_list.append("5_trailer:" + self.three_trailer)
         return "|".join(mod_id_list)
 
+
     def write_specs(self, writer, id):
         temp_dict = {"ID" : id, "Seq" : self.seq, "3-trailer" :
             self.three_trailer, "t-loop" : self.t_loop_seq, "acceptor" :
@@ -125,6 +132,7 @@ class SeqSpecs:
             "Seq_length" : str(self.length), "Trailer_length" :
             str(self.trailer_length)}
         writer.writerow(temp_dict) 
+
 
 class Sorter:
     def __init__(self):
@@ -139,10 +147,8 @@ class Sorter:
             "full-length", "Seq_length", "Trailer_length"]
         self.max_seq_width = len(self.fieldnames[1])
 
-       #self.passed_seqs_write_fasta = u.FastaOutput(args.passed_writefile)
-       #self.rejected_seqs_write_fasta = u.FastaOutput(args.rejected_writefile)
-   
         self.stats = SorterStats()
+
 
     def set_file_names(self, args):
         self.passed_seqs_write_fasta = u.FastaOutput(args.sample_name +
@@ -255,6 +261,7 @@ class Sorter:
         res_tup = (False, cur_seq_specs)
         return res_tup
 
+
     def fix_spacing_csv(self): 
         tabfile = open(self.no_trailer_tabfile, "w")
         trailer_tabfile = open(self.trailer_tabfile, "w")
@@ -283,6 +290,7 @@ class Sorter:
        
         self.stats.num_trailer = trailer_count
         os.remove("tab_passed")
+
 
     def write_to_outputs(self, spec_writer):
         self.stats.total_seqs += 1
@@ -347,10 +355,6 @@ if __name__ == '__main__':
         " for naming output files")
     parser.add_argument("-s", "--length_sort", help="sort sequences based on length (excluding trailer)", 
         action="store_true")
-    # parser.add_argument("passed_writefile", 
-        # help="name of write file for passed sequences")
-    # parser.add_argument("rejected_writefile", 
-        # help="name of write file for rejected sequences")
 
     args = parser.parse_args()
     
