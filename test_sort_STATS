@@ -1,0 +1,20 @@
+Total seqs                                              	1833
+Total full-length                                       	48
+With trailer                                            	86
+Total passed                                            	516
+	No divergence                                       	391
+	T-loop divergence                                   	97
+		Divergence at pos 0                         	8
+		Divergence at pos 1                         	9
+		Divergence at pos 2                         	7
+		Divergence at pos 3                         	15
+		Divergence at pos 8                         	58
+	Acceptor divergence                                 	28
+		Divergence at pos -3                        	13
+		Divergence at pos -2                        	5
+		Divergence at pos -1                        	10
+Total failed                                            	1317
+	T-loop seq rejected                                 	74
+	Acceptor seq rejected                               	10
+	Both rejected                                       	1173
+	Short rejected                                      	60
