@@ -21,4 +21,28 @@ class ExtractorStats:
 
     def __init__(self):
         """Initializes statistics."""
-        
+        self.total_seqs = 0
+
+class Extractor:
+    """This class handles the extraction of info from tRNAs"""
+
+    def __init__(self):
+        """Initializes variables for the extractor"""
+        self.read_file = ""
+
+    def extract_anticodon(self, seq):
+        length = len(seq)
+        anticodon_loop_start = 24 + 8 + 17
+        anticodon_loop_start = 24 + 8
+
+        if lev.distance("GTTC", seq[-24:-20]) < 2:
+            print seq[-24:-20]
+        else:
+            print "error: GTTC didn't match"
+            print seq[-24:-20]
+            
+
+    def run(self, args):
+        self.read_file = args.readfile
+        seq = "ACGGGTTCGATTCCCGTACTGGATGCCAAGATCGGAAGAGCACACGTCTAGTTCTACAGTCCGACGATCACGGGTTCGATTCCCGTACTGACTGCCA"
+        self.extract_anticodon(seq)
