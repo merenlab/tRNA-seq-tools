@@ -4,6 +4,8 @@
 
 import os 
 import csv
+import sys
+import tempfile
 import Levenshtein as lev
 
 import Oligotyping.lib.fastalib as u 
@@ -306,7 +308,7 @@ class Sorter:
         return res_tup
 
 
-    def fix_spacing_csv(self):
+    def fix_spacing_csv(self, out_tmp):
         """Fixes spacing and indentation on the csv files (_TAB_NO_TRAILER and
         _TAB_TRAILER)
         """
@@ -314,30 +316,28 @@ class Sorter:
         tabfile = open(self.no_trailer_tabfile, "w")
         trailer_tabfile = open(self.trailer_tabfile, "w")
        
-        with open("tab_passed", "r") as temp_tabfile:
-            temp_tabfile_reader = csv.DictReader(temp_tabfile, delimiter="\t")
-            tabfile_writer = csv.DictWriter(tabfile, fieldnames=self.fieldnames,
-                delimiter="\t")
-            trailer_tabfile_writer = csv.DictWriter(trailer_tabfile,
-                fieldnames=self.fieldnames, delimiter="\t")
-            tabfile_writer.writeheader()
-            trailer_tabfile_writer.writeheader()
-            trailer_count = 0
+        temp_tabfile_reader = csv.DictReader(out_tmp, delimiter="\t")
+        tabfile_writer = csv.DictWriter(tabfile, fieldnames=self.fieldnames,
+            delimiter="\t")
+        trailer_tabfile_writer = csv.DictWriter(trailer_tabfile,
+            fieldnames=self.fieldnames, delimiter="\t")
+        tabfile_writer.writeheader()
+        trailer_tabfile_writer.writeheader()
+        trailer_count = 0
 
-            for row in temp_tabfile_reader:
-                row["Seq"] = ("-" * (self.max_seq_width - int(row["Seq_length"]))) + row["Seq"]
-                if row["Trailer_length"] == "0":
-                    row["3-trailer"] = "-"
-                    tabfile_writer.writerow(row)   
-                else:
-                    trailer_tabfile_writer.writerow(row)
-                    trailer_count += 1
+        for row in temp_tabfile_reader:
+            row["Seq"] = ("-" * (self.max_seq_width - int(row["Seq_length"]))) + row["Seq"]
+            if row["Trailer_length"] == "0":
+                row["3-trailer"] = "_"
+                tabfile_writer.writerow(row)   
+            else:
+                trailer_tabfile_writer.writerow(row)
+                trailer_count += 1
 
         tabfile.close()
         trailer_tabfile.close()
        
         self.stats.num_trailer = trailer_count
-        os.remove("tab_passed")
 
 
     def write_to_outputs(self, spec_writer):
@@ -380,17 +380,18 @@ class Sorter:
         """Run the sorter."""
         print "sort started"
         self.set_file_names(args)
-
-        with open("tab_passed", "w") as temp_tabfile:
-            spec_writer = csv.DictWriter(temp_tabfile, fieldnames=self.fieldnames, 
+        
+        with tempfile.TemporaryFile() as out_tmp:
+            spec_writer = csv.DictWriter(out_tmp, fieldnames=self.fieldnames, 
                 delimiter="\t")
             spec_writer.writeheader()
         
             while self.read_fasta.next():
                 self.write_to_outputs(spec_writer)
-
-        self.fix_spacing_csv()
-
+            
+            out_tmp.seek(0)
+            self.fix_spacing_csv(out_tmp)
+        
         if args.length_sort:
             self.write_sorted(self.no_trailer_tabfile)
             self.write_sorted(self.trailer_tabfile)
