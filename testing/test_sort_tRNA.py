@@ -1,7 +1,10 @@
-# coding: utf-8
 import unittest as ut
+import sys
 
-import tRNAsorter.sorter as sort
+sys.path.append("../")
+
+import sort_tRNA as sort
+
 
 class SortTestCase(ut.TestCase):
     def setUp(self):
