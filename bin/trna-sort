@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+# -*- coding: utf-8
+
+import argparse
+
+from tRNAsorter import sorter
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Sort tRNAs")
+    parser.add_argument("readfile", help="name of read file")
+    parser.add_argument("-n", "--sample_name", help="sample name (to be used\
+                        for naming output files")
+    parser.add_argument("-s", "--length_sort", help="sort sequences based on length (excluding trailer)", 
+        action="store_true")
+
+    args = parser.parse_args()
+    
+    if args.length_sort:
+        print "length sorting turned on"
+
+    sorter.Sorter().run(args)
+
