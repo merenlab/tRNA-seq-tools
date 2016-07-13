@@ -1,0 +1,15 @@
+#!/usr/bin/env python
+# -*- coding: utf-8
+
+import argparse
+
+from tRNAsorter import extractor
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Extract anticodons from tRNAs")
+    parser.add_argument("readfile", help="name of read file")
+    parser.add_argument("-n", "--sample_name", help="sample name (to be used\
+                        for naming output files")
+
+    args = parser.parse_args()
+    
