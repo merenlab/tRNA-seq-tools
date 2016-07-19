@@ -185,10 +185,12 @@ class Sorter:
             "_PASSED")
         self.rejected_seqs_write_fasta = u.FastaOutput(args.sample_name +
             "_FAILED")
-        self.sort_stats_write_file = args.sample_name + "_STATS"
+        self.sort_stats_write_file = args.sample_name + "_SORTER_STATS"
         self.read_fasta = u.SequenceSource(args.readfile)
         self.no_trailer_tabfile = args.sample_name + "_TAB_NO_TRAILER"
         self.trailer_tabfile = args.sample_name + "_TAB_TRAILER"
+        
+        self.extractor.set_file_names(args.sample_name)
 
 
     def check_divergence_pos(self, cur_seq_specs):
@@ -405,4 +407,5 @@ class Sorter:
             self.write_sorted(self.no_trailer_tabfile)
             self.write_sorted(self.trailer_tabfile)
         self.sort_stats.write_stats(self.sort_stats_write_file)
+        self.extractor.extractor_stats.write_stats(self.extractor.extractor_stats_file)
         print "sort finished"

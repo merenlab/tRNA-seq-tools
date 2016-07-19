@@ -25,12 +25,35 @@ class ExtractorStats:
         """Initializes statistics."""
         self.total_seqs = 0
 
+    def format_line(self, label, value, level, padding = 55):
+        """Handles indenting/formatting lines for statistics."""
+        levels_dict = {1:"%s%s\t%s\n" % 
+            (label, " " + " " * (padding - len(label)), value),
+            2:"\t%s%s\t%s\n" % 
+                (label, " " + " " * (padding - (4 + len(label))), value),
+            3:"\t\t%s%s\t%s\n" % 
+                (label, " " + " " * (padding - (12 + len(label))), value)}
+        return levels_dict[level]
+
+
+    def write_stats(self, out_file_path):
+        """Writes statistics to an output file.""" 
+        with open(out_file_path, "w") as outfile:
+            outfile.write(self.format_line("Total seqs", "%d" % 
+                self.total_seqs,1))
+
 class Extractor:
     """This class handles the extraction of info from tRNAs"""
 
     def __init__(self):
         """Initializes variables for the extractor"""
+        self.extractor_stats_file = ""
+
         self.extractor_stats = ExtractorStats()
+
+    def set_file_names(self, sample_name):
+        """Takes sample name and assigns output file variables"""
+        self.extractor_stats_file = sample_name + "_EXTRACTOR_STATS"
 
     def pair_check(self, a_arm):
         """Checks a given anticodon arm for valid pairing"""
@@ -60,6 +83,7 @@ class Extractor:
         """Takes a given sequence and checks rules to find the anticodon, and
         returns the anticodon if there is one.
         """
+        self.extractor_stats.total_seqs += 1
         length = len(seq)
         anticodon_arm_start = 24 + 8 + 17
         anticodon_arm_end = 24 + 8
