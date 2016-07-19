@@ -6,6 +6,7 @@ import os
 import csv
 import sys
 import tempfile
+import extractor
 import Levenshtein as lev
 
 import Oligotyping.lib.fastalib as u 
@@ -123,6 +124,7 @@ class SeqSpecs:
         self.acceptor_seq = ""
         self.three_trailer = ""
         self.trailer_length = 0
+        self.anticodon = ""
 
 
     def gen_id_string(self, id):
@@ -151,7 +153,7 @@ class SeqSpecs:
             self.three_trailer, "t-loop" : self.t_loop_seq, "acceptor" :
             self.acceptor_seq, "full-length" : str(self.full_length), 
             "Seq_length" : str(self.length), "Trailer_length" :
-            str(self.trailer_length)}
+            str(self.trailer_length), "Anticodon" : self.anticodon}
         writer.writerow(temp_dict) 
 
 
@@ -162,16 +164,17 @@ class Sorter:
         """Initializes variables for input/output files and statistics."""
         self.passed_seqs_write_fasta = ""
         self.rejected_seqs_write_fasta = ""
-        self.stats_write_file = ""
+        self.sort_stats_write_file = ""
         self.read_fasta = ""
         self.no_trailer_tabfile = ""
         self.trailer_tabfile = ""
 
         self.fieldnames = ["ID", "Seq", "3-trailer", "t-loop", "acceptor",
-            "full-length", "Seq_length", "Trailer_length"]
+            "full-length", "Seq_length", "Trailer_length", "Anticodon"]
         self.max_seq_width = len(self.fieldnames[1])
 
-        self.stats = SorterStats()
+        self.sort_stats = SorterStats()
+        self.extractor = extractor.Extractor()
 
 
     def set_file_names(self, args):
@@ -182,7 +185,7 @@ class Sorter:
             "_PASSED")
         self.rejected_seqs_write_fasta = u.FastaOutput(args.sample_name +
             "_FAILED")
-        self.stats_write_file = args.sample_name + "_STATS"
+        self.sort_stats_write_file = args.sample_name + "_STATS"
         self.read_fasta = u.SequenceSource(args.readfile)
         self.no_trailer_tabfile = args.sample_name + "_TAB_NO_TRAILER"
         self.trailer_tabfile = args.sample_name + "_TAB_TRAILER"
@@ -193,37 +196,40 @@ class Sorter:
         position.
         """
         if cur_seq_specs.t_loop_error:
-            self.stats.t_loop_divergence += 1
+            self.sort_stats.t_loop_divergence += 1
             if cur_seq_specs.seq_sub[0] != "G":
-                self.stats.div_at_0 += 1
+                self.sort_stats.div_at_0 += 1
             elif cur_seq_specs.seq_sub[1] != "T":
-                self.stats.div_at_1 += 1
+                self.sort_stats.div_at_1 += 1
             elif cur_seq_specs.seq_sub[2] != "T":
-                self.stats.div_at_2 += 1
+                self.sort_stats.div_at_2 += 1
             elif cur_seq_specs.seq_sub[3] != "C":
-                self.stats.div_at_3 += 1
+                self.sort_stats.div_at_3 += 1
             elif cur_seq_specs.seq_sub[8] != "C":
-                self.stats.div_at_8 += 1
+                self.sort_stats.div_at_8 += 1
         elif cur_seq_specs.acceptor_error:
-            self.stats.acceptor_divergence += 1
+            self.sort_stats.acceptor_divergence += 1
             if cur_seq_specs.seq_sub[-3] != "C":
-                self.stats.div_at_neg_3 += 1
+                self.sort_stats.div_at_neg_3 += 1
             elif cur_seq_specs.seq_sub[-2] != "C":
-                self.stats.div_at_neg_2 += 1
+                self.sort_stats.div_at_neg_2 += 1
             elif cur_seq_specs.seq_sub[-1] != "A":
-                self.stats.div_at_neg_1 += 1
+                self.sort_stats.div_at_neg_1 += 1
         else:
-            self.stats.no_divergence += 1
+            self.sort_stats.no_divergence += 1
 
 
     def check_full_length(self, cur_seq_specs):
         """Takes a SeqSpecs class and checks whether or not the sequence is a
-        full-length sequence, returns an updated SeqSpecs class.
+        full-length sequence, returns an updated SeqSpecs class. Also determines
+        the anticodon if it is a full-length seq
         """
         if cur_seq_specs.length > 70 and cur_seq_specs.length < 100:
             if cur_seq_specs.seq[7] == "T" and cur_seq_specs.seq[13] == "A":
-                self.stats.total_full_length += 1
+                self.sort_stats.total_full_length += 1
                 cur_seq_specs.full_length = True
+                anticodon = self.extractor.extract_anticodon(cur_seq_specs.seq)
+                cur_seq_specs.anticodon = anticodon
         return cur_seq_specs
 
 
@@ -243,10 +249,10 @@ class Sorter:
         """Consdolidates all the methods run specifically for a confirmed passed
         sequence.
         """
-        self.stats.total_passed += 1
+        self.sort_stats.total_passed += 1
         self.check_divergence_pos(cur_seq_specs)
-        cur_seq_specs = self.check_full_length(cur_seq_specs)
         cur_seq_specs = self.split_3_trailer(cur_seq_specs, i)
+        cur_seq_specs = self.check_full_length(cur_seq_specs)
         return cur_seq_specs
 
 
@@ -296,14 +302,14 @@ class Sorter:
         # Handles a failed sequence
         if cur_seq_specs.t_loop_error and cur_seq_specs.acceptor_error:
             if length < 24:
-                self.stats.short_rejected += 1
+                self.sort_stats.short_rejected += 1
             else:
-                self.stats.both_rejected += 1
+                self.sort_stats.both_rejected += 1
         elif cur_seq_specs.acceptor_error and not cur_seq_specs.t_loop_error:
-            self.stats.acceptor_seq_rejected += 1
+            self.sort_stats.acceptor_seq_rejected += 1
         elif cur_seq_specs.t_loop_error and not cur_seq_specs.acceptor_error:
-            self.stats.t_loop_seq_rejected += 1
-        self.stats.total_rejected += 1
+            self.sort_stats.t_loop_seq_rejected += 1
+        self.sort_stats.total_rejected += 1
         res_tup = (False, cur_seq_specs)
         return res_tup
 
@@ -337,15 +343,18 @@ class Sorter:
         tabfile.close()
         trailer_tabfile.close()
        
-        self.stats.num_trailer = trailer_count
+        self.sort_stats.num_trailer = trailer_count
 
 
     def write_to_outputs(self, spec_writer):
         """Writes the sort results to output files."""
-        self.stats.total_seqs += 1
+        self.sort_stats.total_seqs += 1
         is_tRNA_result = self.is_tRNA(self.read_fasta.seq.upper()) 
         mod_id = is_tRNA_result[1].gen_id_string(
             self.read_fasta.id.split('|')[0]) 
+
+       #print "Stored anticodon is: " + is_tRNA_result[1].anticodon
+
 
         if is_tRNA_result[0]:
             self.passed_seqs_write_fasta.write_id(mod_id)
@@ -395,5 +404,5 @@ class Sorter:
         if args.length_sort:
             self.write_sorted(self.no_trailer_tabfile)
             self.write_sorted(self.trailer_tabfile)
-        self.stats.write_stats(self.stats_write_file)
+        self.sort_stats.write_stats(self.sort_stats_write_file)
         print "sort finished"
