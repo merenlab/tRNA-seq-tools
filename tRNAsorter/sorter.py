@@ -185,7 +185,7 @@ class Sorter:
             "_PASSED")
         self.rejected_seqs_write_fasta = u.FastaOutput(args.sample_name +
             "_FAILED")
-        self.sort_stats_write_file = args.sample_name + "_SORTER_STATS"
+        self.sort_stats_write_file = args.sample_name + "_SORTER_STATS.txt"
         self.read_fasta = u.SequenceSource(args.readfile)
         self.no_trailer_tabfile = args.sample_name + "_TAB_NO_TRAILER"
         self.trailer_tabfile = args.sample_name + "_TAB_TRAILER"
@@ -230,7 +230,7 @@ class Sorter:
             if cur_seq_specs.seq[7] == "T" and cur_seq_specs.seq[13] == "A":
                 self.sort_stats.total_full_length += 1
                 cur_seq_specs.full_length = True
-                anticodon = self.extractor.extract_anticodon(cur_seq_specs.seq)
+                anticodon = ",".join(self.extractor.extract_anticodon(cur_seq_specs.seq))
                 cur_seq_specs.anticodon = anticodon
         return cur_seq_specs
 

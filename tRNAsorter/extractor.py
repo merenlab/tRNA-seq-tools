@@ -24,6 +24,12 @@ class ExtractorStats:
     def __init__(self):
         """Initializes statistics."""
         self.total_seqs = 0
+        self.type_I_seqs = 0
+        self.type_II_seqs = 0
+        self.type_I_match_dict = {8:0, 9:0}
+        self.type_II_match_dict = {}
+        for x in range (17, 27):
+            self.type_II_match_dict[x] = 0
 
     def format_line(self, label, value, level, padding = 55):
         """Handles indenting/formatting lines for statistics."""
@@ -41,6 +47,19 @@ class ExtractorStats:
         with open(out_file_path, "w") as outfile:
             outfile.write(self.format_line("Total seqs", "%d" % 
                 self.total_seqs,1))
+            
+            outfile.write(self.format_line("Type I Seqs", "%d" % 
+                self.type_I_seqs,2))
+            for key in self.type_I_match_dict:
+                outfile.write(self.format_line("Match at dist " + str(key), 
+                    "%d" % self.type_I_match_dict[key],3))
+            
+            outfile.write(self.format_line("Type II Seqs", "%d" % 
+                self.type_II_seqs,2))
+            for key in self.type_II_match_dict:
+                outfile.write(self.format_line("Match at dist " + str(key), 
+                    "%d" % self.type_II_match_dict[key],3))
+
 
 class Extractor:
     """This class handles the extraction of info from tRNAs"""
@@ -53,7 +72,7 @@ class Extractor:
 
     def set_file_names(self, sample_name):
         """Takes sample name and assigns output file variables"""
-        self.extractor_stats_file = sample_name + "_EXTRACTOR_STATS"
+        self.extractor_stats_file = sample_name + "_EXTRACTOR_STATS.txt"
 
     def pair_check(self, a_arm):
         """Checks a given anticodon arm for valid pairing"""
@@ -87,19 +106,26 @@ class Extractor:
         length = len(seq)
         anticodon_arm_start = 24 + 8 + 17
         anticodon_arm_end = 24 + 8
+        anticodon_list = []
 
         if lev.distance("GTTC", seq[-24:-20]) < 2:
+            # handles type I full-length seqs
             if length < 78:
+                # checks if there is an anticodon at a distance of 8
                 if self.pair_check(seq[-anticodon_arm_start: -anticodon_arm_end]):
                     anticodon = self.get_anticodon(seq[-anticodon_arm_start: -anticodon_arm_end])
-                    #print "8 passed: " + anticodon
-                    return anticodon
-                elif self.pair_check(seq[-(anticodon_arm_start +
+                    self.extractor_stats.type_I_match_dict[8] += 1
+                    self.extractor_stats.type_I_seqs += 1
+                    anticodon_list.append(anticodon)
+                # checks if there is an anticodon at a distance of 9
+                if self.pair_check(seq[-(anticodon_arm_start +
                         1):-(anticodon_arm_end + 1)]):
                     anticodon = self.get_anticodon(seq[-(anticodon_arm_start + 1):
                         -(anticodon_arm_end + 1)])
-                    #print "9 passed: " + anticodon
-                    return anticodon
+                    self.extractor_stats.type_I_match_dict[9] += 1
+                    self.extractor_stats.type_I_seqs += 1
+                    anticodon_list.append(anticodon)
+            # handles type II full-length seqs
             elif length > 81:
                 for x in range(17, 27):
                     anticodon_arm_start = 24 + x + 17
@@ -108,15 +134,15 @@ class Extractor:
                         -anticodon_arm_end]):
                         anticodon = self.get_anticodon(seq[-anticodon_arm_start: -anticodon_arm_end])
                         if len(anticodon) > 0:
-                           #print str(x) + " passed: " + anticodon
-                            return anticodon
+                            self.extractor_stats.type_II_match_dict[x] += 1
+                            self.extractor_stats.type_II_seqs += 1
+                            anticodon_list.append(anticodon)
                         else:
                             continue
             else:
                 print "length fell between type I and type II"
-                    
         else:
             print "error: GTTC didn't match"
             print seq[-24:-20]
 
-
+        return anticodon_list
