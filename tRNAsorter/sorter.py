@@ -230,8 +230,17 @@ class Sorter:
             if cur_seq_specs.seq[7] == "T" and cur_seq_specs.seq[13] == "A":
                 self.sort_stats.total_full_length += 1
                 cur_seq_specs.full_length = True
-                anticodon = ",".join(self.extractor.extract_anticodon(cur_seq_specs.seq))
-                cur_seq_specs.anticodon = anticodon
+        return cur_seq_specs
+
+    
+    def assign_anticodons(self, cur_seq_specs):
+        """Takes a SeqSpecs class and tries to assign an anticodon to it"""
+        if cur_seq_specs.full_length:
+            anticodon = ",".join(self.extractor.extract_anticodon(cur_seq_specs.seq))
+            cur_seq_specs.anticodon = anticodon
+        else: 
+            anticodon = ",".join(self.extractor.extract_anticodon_not_full_length(cur_seq_specs.seq))
+            cur_seq_specs.anticodon = anticodon
         return cur_seq_specs
 
 
@@ -255,6 +264,7 @@ class Sorter:
         self.check_divergence_pos(cur_seq_specs)
         cur_seq_specs = self.split_3_trailer(cur_seq_specs, i)
         cur_seq_specs = self.check_full_length(cur_seq_specs)
+        cur_seq_specs = self.assign_anticodons(cur_seq_specs)
         return cur_seq_specs
 
 
