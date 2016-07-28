@@ -28,6 +28,7 @@ class ExtractorStats:
         self.type_II_seqs = 0
         self.type_I_match_dict = {8:0, 9:0}
         self.type_II_match_dict = {}
+        self.subseq_match = 0
         for x in range (16, 27):
             self.type_II_match_dict[x] = 0
 
@@ -59,6 +60,9 @@ class ExtractorStats:
             for key in self.type_II_match_dict:
                 outfile.write(self.format_line("Match at dist " + str(key), 
                     "%d" % self.type_II_match_dict[key],3))
+            
+            outfile.write(self.format_line("Sub Seq Matches", "%d" % 
+                self.subseq_match,2))
 
 
 class Extractor:
@@ -199,5 +203,37 @@ class Extractor:
 
         return anticodon_list
 
+
+    def match_unassigned_sequences(self, file_name, max_seq_width, fieldnames):
+        """takes unmatched sequences and attempts to match them to already
+        matched sequences"""
+        
+        match_dict = {}
+        unassigned_rows = []
+        assigned_rows = []
+
+        with open(file_name, "r") as readfile:
+            readfile_reader = csv.DictReader(readfile, delimiter="\t")
+            for row in readfile_reader:
+                if row["Anticodon"]:
+                    match_dict[row["Seq"].strip("-")] = row["Anticodon"]
+                    assigned_rows.append(row)
+                else:
+                    unassigned_rows.append(row)
+
+        for row in unassigned_rows:
+            seq = row["Seq"].strip("-")
+            for key in match_dict.keys():
+                if seq in key:
+                    self.extractor_stats.subseq_match += 1
+                    row["Anticodon"] = match_dict[key]
+                    
+        with open(file_name, "w") as writefile:
+            writefile_writer = csv.DictWriter(writefile, fieldnames=fieldnames,
+                delimiter="\t")
+            writefile_writer.writeheader()
+            writerows = assigned_rows + unassigned_rows
+            for row in writerows:
+                writefile_writer.writerow(row)
 
 

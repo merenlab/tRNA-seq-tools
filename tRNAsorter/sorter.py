@@ -413,6 +413,9 @@ class Sorter:
             out_tmp.seek(0)
             self.fix_spacing_csv(out_tmp)
         
+        self.extractor.match_unassigned_sequences(self.no_trailer_tabfile,
+            self.max_seq_width, self.fieldnames)
+
         if args.length_sort:
             self.write_sorted(self.no_trailer_tabfile)
             self.write_sorted(self.trailer_tabfile)
