@@ -146,8 +146,6 @@ class Extractor:
                             anticodon_list.append(anticodon)
                         else:
                             continue
-            else:
-                print "length fell between type I and type II"
         else:
             print "error: GTTC didn't match"
             print seq[-24:-20]

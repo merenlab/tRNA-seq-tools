@@ -413,12 +413,19 @@ class Sorter:
             out_tmp.seek(0)
             self.fix_spacing_csv(out_tmp)
         
-        self.extractor.match_unassigned_sequences(self.no_trailer_tabfile,
-            self.max_seq_width, self.fieldnames)
+        print "finished preliminary tRNA sort"
+
+        # self.extractor.match_unassigned_sequences(self.no_trailer_tabfile,
+        #     self.max_seq_width, self.fieldnames)
+
+        # print "finished matching unassigned seqs"
 
         if args.length_sort:
             self.write_sorted(self.no_trailer_tabfile)
             self.write_sorted(self.trailer_tabfile)
+
+        print "finished sorting"
+
         self.sort_stats.write_stats(self.sort_stats_write_file)
         self.extractor.extractor_stats.write_stats(self.extractor.extractor_stats_file)
         print "sort finished"
