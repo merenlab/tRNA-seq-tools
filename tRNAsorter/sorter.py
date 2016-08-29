@@ -7,6 +7,7 @@ import csv
 import sys
 import tempfile
 import extractor
+import dbops
 import Levenshtein as lev
 
 import Oligotyping.lib.fastalib as u 
@@ -141,7 +142,7 @@ class SeqSpecs:
             mod_id_list.append("full length: Maybe")
         mod_id_list.append("t_loop:" + self.t_loop_seq)
         mod_id_list.append("acceptor:" + self.acceptor_seq)
-        mod_id_list.append("5_trailer:" + self.three_trailer)
+        mod_id_list.append("3_trailer:" + str(self.three_trailer))
         return "|".join(mod_id_list)
 
 
@@ -156,6 +157,25 @@ class SeqSpecs:
             str(self.trailer_length), "Anticodon" : self.anticodon}
         writer.writerow(temp_dict) 
 
+    def gen_sql_query_info_string(self, id):
+        info_string_list = []
+        info_string_list.append(id)
+        info_string_list.append(self.seq)
+        if self.trailer_length == 0:
+            info_string_list.append("NULL")
+        else:
+            info_string_list.append(self.three_trailer)
+        info_string_list.append(self.t_loop_seq)
+        info_string_list.append(self.acceptor_seq)
+        info_string_list.append(str(self.full_length))
+        info_string_list.append(str(self.length))
+        info_string_list.append(str(self.trailer_length))
+        if len(self.anticodon) == 0:
+            info_string_list.append("NULL")
+        else:
+            info_string_list.append(self.anticodon)
+        return ", ".join(info_string_list)
+
 
 class Sorter:
     """Class that handles the sorting of the seqs."""
@@ -168,6 +188,7 @@ class Sorter:
         self.read_fasta = ""
         self.no_trailer_tabfile = ""
         self.trailer_tabfile = ""
+        self.tRNA_DB_file = ""
 
         self.fieldnames = ["ID", "Seq", "3-trailer", "t-loop", "acceptor",
             "full-length", "Seq_length", "Trailer_length", "Anticodon"]
@@ -175,6 +196,8 @@ class Sorter:
 
         self.sort_stats = SorterStats()
         self.extractor = extractor.Extractor()
+        self.db = None
+                
 
 
     def set_file_names(self, args):
@@ -191,7 +214,7 @@ class Sorter:
         self.trailer_tabfile = args.sample_name + "_TAB_TRAILER"
         
         self.extractor.set_file_names(args.sample_name)
-
+        self.tRNA_DB_file = args.sample_name + "_tRNA_DB"
 
     def check_divergence_pos(self, cur_seq_specs):
         """Takes a SeqSpecs class and updates statistics on divergence
@@ -373,6 +396,8 @@ class Sorter:
             self.passed_seqs_write_fasta.write_seq(is_tRNA_result[1].seq)
             is_tRNA_result[1].write_specs(spec_writer, 
                 self.read_fasta.id.split('|')[0])
+            self.db.insert_seq(is_tRNA_result[1],
+                self.read_fasta.id.split('|')[0])
 
             if len(is_tRNA_result[1].seq) > self.max_seq_width:
                 self.max_seq_width = len(is_tRNA_result[1].seq)
@@ -401,7 +426,9 @@ class Sorter:
         """Run the sorter."""
         print "sort started"
         self.set_file_names(args)
-        
+        self.db = dbops.tRNADatabase(self.tRNA_DB_file)
+
+
         with tempfile.TemporaryFile() as out_tmp:
             spec_writer = csv.DictWriter(out_tmp, fieldnames=self.fieldnames, 
                 delimiter="\t")
@@ -415,6 +442,9 @@ class Sorter:
         
         print "finished preliminary tRNA sort"
 
+
+        self.db.disconnect()
+
         # self.extractor.match_unassigned_sequences(self.no_trailer_tabfile,
         #     self.max_seq_width, self.fieldnames)
 
@@ -425,7 +455,7 @@ class Sorter:
             self.write_sorted(self.trailer_tabfile)
 
         print "finished sorting"
-
+        
         self.sort_stats.write_stats(self.sort_stats_write_file)
         self.extractor.extractor_stats.write_stats(self.extractor.extractor_stats_file)
         print "sort finished"
