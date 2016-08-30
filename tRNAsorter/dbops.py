@@ -19,6 +19,7 @@ __email__ = "stevencui729@gmail.com"
 
 class tRNADatabase:
     """To access or create a tRNA Database."""
+    
     def __init__(self, db_path):
         self.db = db.DB(db_path)
         self.db_path = db_path
@@ -34,12 +35,6 @@ class tRNADatabase:
             self.table_types)
 
     def insert_seq(self, seq_data, id):
-
-        sql_query = ("""INSERT INTO %s (%s) VALUES (%s)""" %
-            (self.table_name, (", ".join(self.table_structure)),
-            seq_data.gen_sql_query_info_string(id)))
-        print sql_query
-
-        self.db._exec("""INSERT INTO %s (%s) VALUES (%s)""" %
-            (self.table_name, (", ".join(['?'] * len(self.table_structure))),
-            seq_data.gen_sql_query_info_string(id)))
+        self.db._exec("""INSERT INTO %s VALUES (%s)""" %
+            (self.table_name, (", ".join(['?'] * len(self.table_structure)))),
+            seq_data.gen_sql_query_info_tuple(id))

@@ -157,7 +157,7 @@ class SeqSpecs:
             str(self.trailer_length), "Anticodon" : self.anticodon}
         writer.writerow(temp_dict) 
 
-    def gen_sql_query_info_string(self, id):
+    def gen_sql_query_info_tuple(self, id):
         info_string_list = []
         info_string_list.append(id)
         info_string_list.append(self.seq)
@@ -174,7 +174,7 @@ class SeqSpecs:
             info_string_list.append("NULL")
         else:
             info_string_list.append(self.anticodon)
-        return ", ".join(info_string_list)
+        return tuple(info_string_list)
 
 
 class Sorter:
@@ -443,7 +443,7 @@ class Sorter:
         print "finished preliminary tRNA sort"
 
 
-        self.db.disconnect()
+        self.db.db.disconnect()
 
         # self.extractor.match_unassigned_sequences(self.no_trailer_tabfile,
         #     self.max_seq_width, self.fieldnames)

@@ -86,7 +86,7 @@ class DB:
             if string_the_key:
                 results_dict[str(row[0])] = entry
             else:
-                results_dict[row(0)] = entry
+                results_dict[row[0]] = entry
 
         return results_dict
 
