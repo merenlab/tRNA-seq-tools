@@ -24,8 +24,19 @@ __email__ = "stevencui729@gmail.com"
 
 
 # table schemas for tRNA profiling table
-tRNA_profiling_table_name = "tRNA_profiling"
-tRNA_profiling_table_structure = ["ID", "Seq", "three_trailer", "t_loop",
-    "acceptor", "full_length", "Seq_length", "Trailer_length", "Anticodon"]
+tRNA_profiling_table_name = "profile"
+tRNA_profiling_table_structure = ["ID", "Seq", "Three_trailer", "T_loop",
+    "Acceptor", "Full_length", "Seq_length", "Trailer_length", "Anticodon"]
 tRNA_profiling_table_types = ["text", "text", "text", "text", "text", "text",
     "int", "int", "text"]
+
+# table schemas for stats table
+stats_table_name = "stats"
+stats_table_structure = ["Total_seqs", "Total_full_length", "With_trailer",
+    "Total_passed", "No_divergence", "T_loop_divergence", "Pos_0_divergence",
+    "Pos_1_divergence", "Pos_2_divergence", "Pos_3_divergence", 
+    "Pos_8_divergence", "Acceptor_divergence", "Pos_neg_3_divergence", 
+    "Pos_neg_2_divergence", "Pos_neg_1_divergence", "Total_failed", "T_loop_reject",
+    "Acceptor_reject", "Both_reject", "Short_reject"]
+stats_table_types = ["int"] * len(stats_table_structure)
+

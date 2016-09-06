@@ -51,6 +51,31 @@ class SorterStats:
         self.short_rejected = 0
        
 
+    def gen_sql_query_info_tuple(self):
+        info_string_list = []
+        info_string_list.append(self.total_seqs)
+        info_string_list.append(self.total_rejected)
+        info_string_list.append(self.total_passed)
+        info_string_list.append(self.num_trailer)
+        info_string_list.append(self.total_full_length)
+        info_string_list.append(self.no_divergence)
+        info_string_list.append(self.t_loop_divergence)
+        info_string_list.append(self.div_at_0)
+        info_string_list.append(self.div_at_1)
+        info_string_list.append(self.div_at_2)
+        info_string_list.append(self.div_at_3)
+        info_string_list.append(self.div_at_8)
+        info_string_list.append(self.acceptor_divergence)
+        info_string_list.append(self.div_at_neg_1)
+        info_string_list.append(self.div_at_neg_2)
+        info_string_list.append(self.div_at_neg_3)
+        info_string_list.append(self.t_loop_seq_rejected)
+        info_string_list.append(self.acceptor_seq_rejected)
+        info_string_list.append(self.both_rejected)
+        info_string_list.append(self.short_rejected)
+        return tuple(info_string_list)
+
+
     def format_line(self, label, value, level, padding = 55):
         """Handles indenting/formatting lines for statistics."""
         levels_dict = {1:"%s%s\t%s\n" % 
@@ -397,9 +422,6 @@ class Sorter:
         mod_id = is_tRNA_result[1].gen_id_string(
             self.read_fasta.id.split('|')[0]) 
 
-       #print "Stored anticodon is: " + is_tRNA_result[1].anticodon
-
-
         if is_tRNA_result[0]:
             self.passed_seqs_write_fasta.write_id(mod_id)
             self.passed_seqs_write_fasta.write_seq(is_tRNA_result[1].seq)
@@ -429,6 +451,16 @@ class Sorter:
             tabfile_writer = csv.DictWriter(tabfile, fieldnames=self.fieldnames, delimiter="\t")
             tabfile_writer.writeheader()
             tabfile_writer.writerows(sort_list)
+   
+    def add_to_database(self):
+        self.sort_stats.total_seqs += 1
+        is_tRNA_result = self.is_tRNA(self.read_fasta.seq.upper()) 
+        mod_id = is_tRNA_result[1].gen_id_string(
+            self.read_fasta.id.split('|')[0]) 
+
+        if is_tRNA_result[0]:
+            self.db.insert_seq(is_tRNA_result[1],
+                self.read_fasta.id.split('|')[0])
     
 
     def run(self, args):
@@ -437,20 +469,24 @@ class Sorter:
         self.set_file_names(args)
         self.db = dbops.tRNADatabase(self.tRNA_DB_file)
 
+       
+        while self.read_fasta.next():
+            self.add_to_database()
 
-        with tempfile.TemporaryFile() as out_tmp:
-            spec_writer = csv.DictWriter(out_tmp, fieldnames=self.fieldnames, 
-                delimiter="\t")
-            spec_writer.writeheader()
-        
-            while self.read_fasta.next():
-                self.write_to_outputs(spec_writer)
-            
-            out_tmp.seek(0)
-            self.fix_spacing_csv(out_tmp)
+       #with tempfile.TemporaryFile() as out_tmp:
+       #    spec_writer = csv.DictWriter(out_tmp, fieldnames=self.fieldnames, 
+       #        delimiter="\t")
+       #    spec_writer.writeheader()
+       #
+       #    while self.read_fasta.next():
+       #        self.write_to_outputs(spec_writer)
+       #    
+       #    out_tmp.seek(0)
+       #    self.fix_spacing_csv(out_tmp)
         
         print "finished preliminary tRNA sort"
-
+        
+        self.db.insert_stats(self.sort_stats)
 
         self.db.db.disconnect()
 
@@ -459,12 +495,12 @@ class Sorter:
 
         # print "finished matching unassigned seqs"
 
-        if args.length_sort:
-            self.write_sorted(self.no_trailer_tabfile)
-            self.write_sorted(self.trailer_tabfile)
+       #if args.length_sort:
+       #    self.write_sorted(self.no_trailer_tabfile)
+       #    self.write_sorted(self.trailer_tabfile)
 
-        print "finished sorting"
-        
-        self.sort_stats.write_stats(self.sort_stats_write_file)
-        self.extractor.extractor_stats.write_stats(self.extractor.extractor_stats_file)
+       #print "finished sorting"
+       #
+       #self.sort_stats.write_stats(self.sort_stats_write_file)
+       #self.extractor.extractor_stats.write_stats(self.extractor.extractor_stats_file)
         print "sort finished"

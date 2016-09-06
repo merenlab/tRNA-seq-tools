@@ -3,6 +3,7 @@
 
 import tables as t
 import db
+import csv
 
 __author__ = "Steven Cui"
 __copyright__ = "Copyright 2016, The University of Chicago"
@@ -21,8 +22,16 @@ class DB_Accessor:
         self.db = db.DB(db_path)
         self.db_path = db_path
 
-    #def write_to_file(self, dict, 
+    def write_to_file(self, dict, writefile):
+        with open(writefile, "w") as outfile:
+            out_writer = csv.DictWriter(outfile,
+                fieldnames=t.tRNA_profiling_table_structure, delimiter="\t")
+            out_writer.writeheader()
 
+            for key in dict.keys():
+                out_writer.writerow(dict[key])
+
+    
     def run(self):
         #db_dict = self.db.get_table_as_dict(t.tRNA_profiling_table_name)
         #print len(db_dict)
@@ -33,9 +42,10 @@ class DB_Accessor:
         print len(db_dict_no_trailer)
         print db_dict_no_trailer["test_657"]
 
+       # self.write_to_file(db_dict_no_trailer, "test_output")
 
         db_dict_trailer = self.db.get_some_rows_from_table_as_dict(t.tRNA_profiling_table_name,
-            "three_trailer IS NOT NULL")
+            "Trailer_length > 0")
         print len(db_dict_trailer)
-        print db_dict_trailer["test_1823"]
+       #print db_dict_trailer["test_1823"]
             

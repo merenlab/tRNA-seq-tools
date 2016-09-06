@@ -43,6 +43,7 @@ class DB:
     def create_self(self):
         """Creates an empty default table."""
         self._exec("""CREATE TABLE self (key text, value text)""")
+        self.commit()
 
     def create_table(self, table_name, fields, types):
         """Creates a table with the arguments given."""
@@ -51,7 +52,6 @@ class DB:
 
         db_fields = ", ".join(["%s %s" % (t[0], t[1]) for t in zip(fields,
             types)])
-
 
         self._exec("""CREATE TABLE IF NOT EXISTS %s (%s)""" % (table_name,
             db_fields))
