@@ -90,6 +90,28 @@ class DB:
 
         return results_dict
 
+    def get_some_rows_from_table_as_dict(self, table, where_clause,
+        string_the_key=False):
+
+        results_dict = {}
+        rows = self._exec("""SELECT * FROM %s WHERE %s""" % (table,
+            where_clause)).fetchall()
+        table_structure = self.get_table_structure(table)
+        columns_to_return = range(0, len(table_structure))
+
+        for row in rows:
+            entry = {}
+
+            for i in columns_to_return[1:]:
+                entry[table_structure[i]] = row[i]
+
+            if string_the_key:
+                results_dict[str(row[0])] = entry
+            else:
+                results_dict[row[0]] = entry
+
+        return results_dict
+
 
     def commit(self):
         self.conn.commit()

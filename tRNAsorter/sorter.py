@@ -161,19 +161,27 @@ class SeqSpecs:
         info_string_list = []
         info_string_list.append(id)
         info_string_list.append(self.seq)
+
+
         if self.trailer_length == 0:
-            info_string_list.append("NULL")
+            info_string_list.append(None)
         else:
             info_string_list.append(self.three_trailer)
+       #info_string_list.append(self.three_trailer)
+       
         info_string_list.append(self.t_loop_seq)
         info_string_list.append(self.acceptor_seq)
         info_string_list.append(str(self.full_length))
         info_string_list.append(str(self.length))
         info_string_list.append(str(self.trailer_length))
+
+
         if len(self.anticodon) == 0:
-            info_string_list.append("NULL")
+            info_string_list.append(None)
         else:
             info_string_list.append(self.anticodon)
+       #info_string_list.append(self.anticodon)
+        
         return tuple(info_string_list)
 
 

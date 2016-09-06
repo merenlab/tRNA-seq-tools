@@ -21,7 +21,21 @@ class DB_Accessor:
         self.db = db.DB(db_path)
         self.db_path = db_path
 
+    #def write_to_file(self, dict, 
+
     def run(self):
-        db_dict = self.db.get_table_as_dict(t.tRNA_profiling_table_name)
-        print len(db_dict)
-        print db_dict["test_3"]
+        #db_dict = self.db.get_table_as_dict(t.tRNA_profiling_table_name)
+        #print len(db_dict)
+        #print db_dict["test_657"]
+
+        db_dict_no_trailer = self.db.get_some_rows_from_table_as_dict(t.tRNA_profiling_table_name,
+            "three_trailer IS NULL")
+        print len(db_dict_no_trailer)
+        print db_dict_no_trailer["test_657"]
+
+
+        db_dict_trailer = self.db.get_some_rows_from_table_as_dict(t.tRNA_profiling_table_name,
+            "three_trailer IS NOT NULL")
+        print len(db_dict_trailer)
+        print db_dict_trailer["test_1823"]
+            
