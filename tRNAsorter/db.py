@@ -15,7 +15,10 @@ __email__ = "stevencui729@gmail.com"
 
 
 class DB:
+    """This class handles basic database functions."""
+
     def __init__(self, db_path):
+        """Initializes path and connects database."""
         self.db_path = db_path
 
         self.conn = sqlite3.connect(self.db_path)
@@ -25,6 +28,9 @@ class DB:
 
 
     def _exec(self, sql_query, value=None):
+        """Overwrite function used in place of execute() to execute sql
+        queries.
+        """
         if value:
             return_val = self.cursor.execute(sql_query, value)
         else:
@@ -35,9 +41,11 @@ class DB:
 
 
     def create_self(self):
+        """Creates an empty default table."""
         self._exec("""CREATE TABLE self (key text, value text)""")
 
     def create_table(self, table_name, fields, types):
+        """Creates a table with the arguments given."""
         if len(fields) != len(types):
             print "error: fields and types different sizes"
 
@@ -51,17 +59,20 @@ class DB:
 
 
     def get_all_rows_from_table(self, table):
+        """Get all the rows from a table as a list."""
         result = self._exec("""SELECT * FROM %s""" % table)
         return result.fetchall()
 
     def get_table_structure(self, table):
+        """Get the headers of a table as a list."""
         result = self._exec("""SELECT * FROM %s""" % table)
         return [t[0] for t in result.description]
 
     def get_table_as_dict(self, table, table_structure=None,
         string_the_key=False, keys_of_interest=None,
         omit_parent_column=False):
-       
+        """Returns a table's entire contents as a dict."""
+
         results_dict = {}
         rows = self.get_all_rows_from_table(table)
 
@@ -92,6 +103,10 @@ class DB:
 
     def get_some_rows_from_table_as_dict(self, table, where_clause,
         string_the_key=False):
+        """Returns some of a table's contents as a dict. The contents are
+        determined by the where-clause arguement, which will be used in an SQL
+        query.
+        """
 
         results_dict = {}
         rows = self._exec("""SELECT * FROM %s WHERE %s""" % (table,
@@ -114,9 +129,11 @@ class DB:
 
 
     def commit(self):
+        """Commits the changes made to the database."""
         self.conn.commit()
 
     def disconnect(self):
+        """Disconnects from the database."""
         self.conn.commit()
         self.conn.close()
 

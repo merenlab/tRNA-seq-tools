@@ -22,6 +22,8 @@ __email__ = "stevencui729@gmail.com"
 
 ###############################################################################
 
+
+# table schemas for tRNA profiling table
 tRNA_profiling_table_name = "tRNA_profiling"
 tRNA_profiling_table_structure = ["ID", "Seq", "three_trailer", "t_loop",
     "acceptor", "full_length", "Seq_length", "Trailer_length", "Anticodon"]

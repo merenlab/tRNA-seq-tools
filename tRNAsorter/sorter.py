@@ -158,6 +158,7 @@ class SeqSpecs:
         writer.writerow(temp_dict) 
 
     def gen_sql_query_info_tuple(self, id):
+        """Generates tuple of values to add into database to use in SQL query."""
         info_string_list = []
         info_string_list.append(id)
         info_string_list.append(self.seq)
