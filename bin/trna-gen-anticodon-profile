@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+# -*- coding: utf-8
+
+import argparse
+import csv
+import os
+import sys
+
+from tRNAsorter import dbops
+
+
+def write_to_output(outfile, profile, dict):
+    fieldnames = ["Sample_name", "Anticodon", "Count"]
+
+    if os.path.exists(outfile):
+        with open(outfile, "a") as output_file:
+            out_writer = csv.DictWriter(output_file, fieldnames=fieldnames,
+                delimiter="\t")
+
+            for key in dict.keys():
+                out_writer.writerow({"Sample_name":profile, "Anticodon":key, 
+                    "Count":dict[key]})
+    else:
+        with open(outfile, "w") as output_file:
+            out_writer = csv.DictWriter(output_file, fieldnames=fieldnames,
+                delimiter="\t")
+            out_writer.writeheader()
+
+            for key in dict.keys():
+                out_writer.writerow({"Sample_name":profile, "Anticodon":key, 
+                    "Count":dict[key]})
+
+
+def write_to_output_matrix(outfile, dict, fieldnames):
+    fieldnames.insert(0, "Anticodon")
+
+    with open(outfile, "w") as output_file:
+        out_writer = csv.DictWriter(output_file, fieldnames=fieldnames,
+                delimiter="\t")
+        out_writer.writeheader()
+
+        for key in dict.keys():
+            dict[key]["Anticodon"] = key
+            out_writer.writerow(dict[key])
+
+
+def main(args):
+    if os.path.exists(args.output_path):
+        os.remove(args.output_path)
+
+    if args.matrix_form:
+        matrix_dict = {}
+
+    for profile in args.profiles:
+        profile_db = dbops.tRNADatabase(profile, skip_init=True)
+        anticodon_profile = profile_db.gen_anticodon_profile(args.only_full_length,
+            args.min_seq_length, args.max_seq_length, args.anticodons)
+        
+        if args.matrix_form:
+            for key in anticodon_profile.keys():
+                if key not in matrix_dict:
+                    matrix_dict[key] = {}
+                matrix_dict[key][profile] = anticodon_profile[key]
+        else:
+            write_to_output(args.output_path, profile, anticodon_profile)
+
+    write_to_output_matrix(args.output_path, matrix_dict, args.profiles)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="create anticodon profile\
+         from one or many tRNA profiles")
+    parser.add_argument("profiles", nargs="*", help="name of read file")
+    parser.add_argument("-o", "--output_path", help="output path (path where\
+        output will be redirected")
+    parser.add_argument("--only-full-length", help="only consider full-length\
+        sequences", action="store_true")
+    parser.add_argument("--matrix-form", help="output in matrix form", 
+        action="store_true")
+    parser.add_argument("--min-seq-length", action="store", type=int, 
+        help="set a minimum sequence length")
+    parser.add_argument("--max-seq-length", action="store", type=int, 
+        help="set a maximum sequence length")
+    parser.add_argument("--anticodons", action = "store", help="optional\
+        specific anticodons(comma-separated) to search for")
+
+    args = parser.parse_args()
+    
+    main(args)
+        

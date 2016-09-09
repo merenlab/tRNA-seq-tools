@@ -238,17 +238,25 @@ class Sorter:
         """Takes command line arguments from args and assigns input/output file
         variables.
         """
-        self.passed_seqs_write_fasta = u.FastaOutput(args.sample_name +
-            "_PASSED")
-        self.rejected_seqs_write_fasta = u.FastaOutput(args.sample_name +
-            "_FAILED")
+       #self.passed_seqs_write_fasta = u.FastaOutput(args.sample_name +
+       #    "_PASSED")
+       #self.rejected_seqs_write_fasta = u.FastaOutput(args.sample_name +
+       #    "_FAILED")
         self.sort_stats_write_file = args.sample_name + "_SORTER_STATS.txt"
         self.read_fasta = u.SequenceSource(args.readfile)
         self.no_trailer_tabfile = args.sample_name + "_TAB_NO_TRAILER"
         self.trailer_tabfile = args.sample_name + "_TAB_TRAILER"
         
         self.extractor.set_file_names(args.sample_name)
-        self.tRNA_DB_file = args.sample_name + "_tRNA_DB"
+        
+        if args.output_path:
+            if args.output_path.endswith(".db"):
+                self.tRNA_DB_file = args.output_path
+            else:
+                print "given output file not correct format"
+                sys.exit(1)
+        else:
+            self.tRNA_DB_file = args.sample_name + ".db"
 
     def check_divergence_pos(self, cur_seq_specs):
         """Takes a SeqSpecs class and updates statistics on divergence

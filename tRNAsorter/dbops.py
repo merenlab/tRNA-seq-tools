@@ -2,7 +2,6 @@
 # pylint: disable=line-too-long
 
 
-import os
 import sys
 import sqlite3
 import tables as t
@@ -20,7 +19,7 @@ __email__ = "stevencui729@gmail.com"
 class tRNADatabase:
     """To access or create a tRNA Database."""
     
-    def __init__(self, db_path):
+    def __init__(self, db_path, skip_init=False):
         """Initializes variables."""
         self.db = db.DB(db_path)
         self.db_path = db_path
@@ -31,7 +30,8 @@ class tRNADatabase:
         self.stats_table_structure = t.stats_table_structure
         self.stats_table_types = t.stats_table_types
 
-        self.create()
+        if not skip_init:
+            self.create()
 
 
     def create(self):
@@ -54,3 +54,35 @@ class tRNADatabase:
             (self.stats_table_name, (", ".join(['?'] *
             len(self.stats_table_structure)))),
             sorter_stats.gen_sql_query_info_tuple())
+
+    def gen_anticodon_profile(self, only_full_length, min_seq_length, 
+        max_seq_length, anticodons): 
+        
+        anticodon_count_dict = {}
+
+        where_clause = "Three_trailer IS NULL AND Anticodon IS NOT NULL"
+        if only_full_length:
+            where_clause += " AND Full_length = 'True'"
+        if min_seq_length:
+            where_clause += (" AND Seq_length >= " + str(min_seq_length))
+        if max_seq_length:
+            where_clause += (" AND Seq_length <= " + str(max_seq_length))
+        if anticodons:
+            spec_anticodons_list = anticodons.split(",")
+            or_string = " OR ".join(["Anticodon IN ('" + spec_anticodon + "')"
+                for spec_anticodon in spec_anticodons_list])
+            where_clause += " AND (" + or_string + ")"
+
+        profile_dict_no_trailer = self.db.get_some_rows_from_table_as_dict(self.profile_table_name,
+            where_clause)
+
+
+        for key in profile_dict_no_trailer.keys():
+            anticodon_list = profile_dict_no_trailer[key]["Anticodon"].split(",")
+                
+            for anticodon in anticodon_list:
+                if anticodon in anticodon_count_dict:
+                    anticodon_count_dict[anticodon] += 1
+                else:
+                    anticodon_count_dict[anticodon] = 1
+        return anticodon_count_dict
