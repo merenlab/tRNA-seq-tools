@@ -57,7 +57,8 @@ class tRNADatabase:
 
     def gen_anticodon_profile(self, only_full_length, min_seq_length, 
         max_seq_length, anticodons): 
-        
+        """returns an anticodon profile from the database"""
+
         anticodon_count_dict = {}
 
         where_clause = "Three_trailer IS NULL AND Anticodon IS NOT NULL"
