@@ -40,3 +40,8 @@ stats_table_structure = ["Total_seqs", "Total_full_length", "With_trailer",
     "Acceptor_reject", "Both_reject", "Short_reject"]
 stats_table_types = ["int"] * len(stats_table_structure)
 
+
+# table schemas for counts table
+counts_table_name = "counts"
+counts_table_structure = ["Seq", "Count"]
+counts_table_types = ["text", "int"]

@@ -2,6 +2,8 @@
 # pylint: disable=line-too-long
 
 
+
+
 import sys
 import sqlite3
 import tables as t
@@ -29,6 +31,10 @@ class tRNADatabase:
         self.stats_table_name = t.stats_table_name
         self.stats_table_structure = t.stats_table_structure
         self.stats_table_types = t.stats_table_types
+        self.counts_table_name = t.counts_table_name
+        self.counts_table_structure = t.counts_table_structure
+        self.counts_table_types = t.counts_table_types
+
 
         if not skip_init:
             self.create()
@@ -54,6 +60,14 @@ class tRNADatabase:
             (self.stats_table_name, (", ".join(['?'] *
             len(self.stats_table_structure)))),
             sorter_stats.gen_sql_query_info_tuple())
+
+    ######
+    # Current work in progress: function for adding seq_counts into a counts
+    # table in the tRNA database
+    ####
+    #def insert_seq_counts(self, seq_count_dict):
+        #"""Insert seq counts into counts table in a tRNA database."""
+
 
     def gen_anticodon_profile(self, only_full_length, min_seq_length, 
         max_seq_length, anticodons): 

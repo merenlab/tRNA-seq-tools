@@ -38,7 +38,21 @@ def write_to_output_matrix(outfile, dict, fieldnames):
 
     with open(outfile, "w") as output_file:
         out_writer = csv.DictWriter(output_file, fieldnames=fieldnames,
-                delimiter="\t")
+                 delimiter="\t")
+        out_writer.writeheader()
+
+        for key in dict.keys():
+            dict[key]["Anticodon"] = key
+            out_writer.writerow(dict[key])
+
+
+def write_to_excel(outfile, dict, fieldnames):
+    fieldnames.insert(0, "Anticodon")
+    """function for writing excel output"""
+
+    with open(outfile, "w") as output_file:
+        out_writer = csv.DictWriter(output_file, fieldnames=fieldnames,
+                 dialect="excel")
         out_writer.writeheader()
 
         for key in dict.keys():
@@ -50,7 +64,7 @@ def main(args):
     if os.path.exists(args.output_path):
         os.remove(args.output_path)
 
-    if args.matrix_form:
+    if args.matrix_form or args.excel:
         matrix_dict = {}
 
     for profile in args.profiles:
@@ -58,7 +72,7 @@ def main(args):
         anticodon_profile = profile_db.gen_anticodon_profile(args.only_full_length,
             args.min_seq_length, args.max_seq_length, args.anticodons)
         
-        if args.matrix_form:
+        if args.matrix_form or args.excel:
             for key in anticodon_profile.keys():
                 if key not in matrix_dict:
                     matrix_dict[key] = {}
@@ -68,6 +82,8 @@ def main(args):
 
     if args.matrix_form:
         write_to_output_matrix(args.output_path, matrix_dict, args.profiles)
+    if args.excel:
+        write_to_excel(args.output_path, matrix_dict, args.profiles)
 
 
 if __name__ == '__main__':
@@ -79,6 +95,8 @@ if __name__ == '__main__':
     parser.add_argument("--only-full-length", help="only consider full-length\
         sequences", action="store_true")
     parser.add_argument("--matrix-form", help="output in matrix form", 
+        action="store_true")
+    parser.add_argument("--excel", help="output in excel format", 
         action="store_true")
     parser.add_argument("--min-seq-length", action="store", type=int, 
         help="set a minimum sequence length")

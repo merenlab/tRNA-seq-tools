@@ -231,7 +231,7 @@ class Sorter:
         self.sort_stats = SorterStats()
         self.extractor = extractor.Extractor()
         self.db = None
-                
+        seq_count_dict = {}                
 
 
     def set_file_names(self, args):
@@ -321,6 +321,22 @@ class Sorter:
         return cur_seq_specs
 
 
+    def check_seq_count(self, cur_seq_specs)
+        """Checks the sequence in current SeqSpecs to see if the seq has
+        already been encountered already, increments count if it has,
+        adds it to the dict.
+        """
+        if cur_seq_specs.seq in self.seq_count_dict:
+            self.seq_count_dict[cur_seq_specs.seq] += 1
+        else:
+            self.seq_count_dict[cur_seq_specs.seq] = 0
+
+        # put the call to a hash function here so we can save the hashed seq in
+        # cur_seq_specs
+        return cur_seq_specs
+
+
+
     def handle_pass_seq(self, cur_seq_specs, i):
         """Consdolidates all the methods run specifically for a confirmed passed
         sequence.
@@ -342,6 +358,7 @@ class Sorter:
         t_loop_error = True
         acceptor_error = True
         cur_seq_specs = SeqSpecs()
+        
 
         # Start the sliding window at the last 24 bases, and move to the left
         # one at a time
@@ -467,7 +484,16 @@ class Sorter:
         if is_tRNA_result[0]:
             self.db.insert_seq(is_tRNA_result[1],
                 self.read_fasta.id.split('|')[0])
-    
+
+
+    def gen_sql_query_info_tuple(self):
+        info_string_list = []
+        info_string_list.append(self.total_seqs)
+        info_string_list.append(self.total_rejected)
+        return tuple(info_string_list)
+
+
+
 
     def run(self, args):
         """Run the sorter."""
@@ -475,9 +501,12 @@ class Sorter:
         self.set_file_names(args)
         self.db = dbops.tRNADatabase(self.tRNA_DB_file)
 
+
        
         while self.read_fasta.next():
             self.add_to_database()
+
+        self.db.insert_seq_counts(self.seq_count_dict)
 
        #with tempfile.TemporaryFile() as out_tmp:
        #    spec_writer = csv.DictWriter(out_tmp, fieldnames=self.fieldnames, 
