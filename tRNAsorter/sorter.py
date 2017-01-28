@@ -499,11 +499,10 @@ class Sorter:
         self.db = dbops.tRNADatabase(self.tRNA_DB_file)
 
 
-       
         while next(self.read_fasta):
             self.add_to_database()
 
-        self.db.insert_seq_counts(self.seq_count_dict)
+        #self.db.insert_seq_counts(self.seq_count_dict)
 
        #with tempfile.TemporaryFile() as out_tmp:
        #    spec_writer = csv.DictWriter(out_tmp, fieldnames=self.fieldnames, 
