@@ -1,13 +1,8 @@
 # -*- coding: utf-8
 # pylint: disable=line-too-long
 
-
-
-
-import sys
-import sqlite3
-from . import tables as t
-from . import db
+import tRNAsorter.tables as t
+import tRNAsorter.db as db
 
 __author__ = "Steven Cui"
 __copyright__ = "Copyright 2016, The University of Chicago"
