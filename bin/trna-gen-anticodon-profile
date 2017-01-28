@@ -5,7 +5,7 @@ import argparse
 import csv
 import os
 
-from tRNAsorter import dbops
+from tRNASeqTools import dbops
 
 
 def write_to_output(outfile, profile, dict):

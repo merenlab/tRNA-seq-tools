@@ -1,8 +1,8 @@
 # -*- coding: utf-8
 # pylint: disable=line-too-long
 
-import tRNAsorter.tables as t
-import tRNAsorter.db as db
+import tRNASeqTools.tables as t
+import tRNASeqTools.db as db
 
 __author__ = "Steven Cui"
 __copyright__ = "Copyright 2016, The University of Chicago"

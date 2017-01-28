@@ -5,7 +5,7 @@ import subprocess
 import os
 import shutil
 
-import tRNAsorter.sorter as sort
+import tRNASeqTools.sorter as sort
 
 class SortTestCase(ut.TestCase):
     def setUp(self):

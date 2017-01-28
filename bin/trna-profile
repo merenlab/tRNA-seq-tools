@@ -3,7 +3,7 @@
 
 import argparse
 
-from tRNAsorter import sorter
+from tRNASeqTools import sorter
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Sort tRNAs")

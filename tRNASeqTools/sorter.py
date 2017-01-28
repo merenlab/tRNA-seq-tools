@@ -7,7 +7,7 @@ from . import extractor
 from . import dbops
 import Levenshtein as lev
 
-import tRNAsorter.fastalib as u 
+import tRNASeqTools.fastalib as u 
 
 
 __author__ = "Steven Cui"

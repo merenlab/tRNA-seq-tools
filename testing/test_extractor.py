@@ -7,7 +7,7 @@ import subprocess
 import csv
 import shutil
 
-import tRNAsorter.extractor as extractor
+import tRNASeqTools.extractor as extractor
 
 class ExtractorTestCase(ut.TestCase):
     def setUp(self):
