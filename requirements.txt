@@ -1,2 +1,3 @@
 python-Levenshtein
 numpy
+illumina-utils
