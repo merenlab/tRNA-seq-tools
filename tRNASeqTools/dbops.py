@@ -20,48 +20,30 @@ class tRNADatabase:
         """Initializes variables."""
         self.db = db.DB(db_path)
         self.db_path = db_path
-        self.profile_table_name = t.tRNA_profiling_table_name
-        self.profile_table_structure = t.tRNA_profiling_table_structure
-        self.profile_table_types = t.tRNA_profiling_table_types
-        self.stats_table_name = t.stats_table_name
-        self.stats_table_structure = t.stats_table_structure
-        self.stats_table_types = t.stats_table_types
-        self.counts_table_name = t.counts_table_name
-        self.counts_table_structure = t.counts_table_structure
-        self.counts_table_types = t.counts_table_types
-
 
         if not skip_init:
             self.create()
 
-
     def create(self):
         """Creates a table in a tRNA database."""
         self.db.create_self()
-        self.db.create_table(self.profile_table_name, self.profile_table_structure, 
-            self.profile_table_types)
-        self.db.create_table(self.stats_table_name, self.stats_table_structure,
-            self.stats_table_types)
+        self.db.create_table(t.profile_table_name, t.profile_table_structure, t.profile_table_types)
+        self.db.create_table(t.stats_table_name, t.stats_table_structure, t.stats_table_types)
+
 
     def insert_seq(self, seq_data, id):
         """Insert a seq and its info into the profile table in a tRNA datbase."""
         self.db._exec("""INSERT INTO %s VALUES (%s)""" %
-            (self.profile_table_name, (", ".join(['?'] * len(self.profile_table_structure)))),
+            (t.profile_table_name, (", ".join(['?'] * len(t.profile_table_structure)))),
             seq_data.gen_sql_query_info_tuple(id))
+
 
     def insert_stats(self, sorter_stats):
         """Insert stats into stats table in a tRNA database."""
-        self.db._exec("""INSERT INTO %s VALUES (%s)""" %
-            (self.stats_table_name, (", ".join(['?'] *
-            len(self.stats_table_structure)))),
-            sorter_stats.gen_sql_query_info_tuple())
-
-    ######
-    # Current work in progress: function for adding seq_counts into a counts
-    # table in the tRNA database
-    ####
-    #def insert_seq_counts(self, seq_count_dict):
-        #"""Insert seq counts into counts table in a tRNA database."""
+        self.db._exec("""INSERT INTO %s VALUES (%s)""" % \
+                        (t.stats_table_name, (", ".join(['?'] *
+                         len(t.stats_table_structure)))),
+                         sorter_stats.gen_sql_query_info_tuple())
 
 
     def gen_anticodon_profile(self, only_full_length, min_seq_length, 
@@ -83,7 +65,7 @@ class tRNADatabase:
                 for spec_anticodon in spec_anticodons_list])
             where_clause += " AND (" + or_string + ")"
 
-        profile_dict_no_trailer = self.db.get_some_rows_from_table_as_dict(self.profile_table_name,
+        profile_dict_no_trailer = self.db.get_some_rows_from_table_as_dict(t.profile_table_name,
             where_clause)
 
 
