@@ -5,6 +5,7 @@
 import csv
 import Levenshtein as lev
 
+
 __author__ = "Steven Cui"
 __copyright__ = "Copyright 2016, The University of Chicago"
 __credits__ = []

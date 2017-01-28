@@ -11,24 +11,17 @@ __maintainer__ = "Steven Cui"
 __email__ = "stevencui729@gmail.com"
 
 
-
 ###############################################################################
-
 #
-
 #   TABLE DESCRIPTIONS
-
 #
-
 ###############################################################################
 
 
 # table schemas for tRNA profiling table
-tRNA_profiling_table_name = "profile"
-tRNA_profiling_table_structure = ["ID", "Seq", "Three_trailer", "T_loop",
-    "Acceptor", "Full_length", "Seq_length", "Trailer_length", "Anticodon"]
-tRNA_profiling_table_types = ["text", "text", "text", "text", "text", "text",
-    "int", "int", "text"]
+profile_table_name      = "profile"
+profile_table_structure = ["ID",   "Seq" , "Three_trailer", "T_loop", "Acceptor", "Full_length", "Seq_length", "Trailer_length", "Anticodon"]
+profile_table_types     = ["text", "text",     "text"     ,  "text" ,   "text"  ,     "text"   ,    "int"    ,      "int"      ,   "text"   ]
 
 # table schemas for stats table
 stats_table_name = "stats"
@@ -39,9 +32,3 @@ stats_table_structure = ["Total_seqs", "Total_full_length", "With_trailer",
     "Pos_neg_2_divergence", "Pos_neg_1_divergence", "Total_failed", "T_loop_reject",
     "Acceptor_reject", "Both_reject", "Short_reject"]
 stats_table_types = ["int"] * len(stats_table_structure)
-
-
-# table schemas for counts table
-counts_table_name = "counts"
-counts_table_structure = ["Seq", "Count"]
-counts_table_types = ["text", "int"]
