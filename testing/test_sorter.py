@@ -61,11 +61,11 @@ class SortTestCase(ut.TestCase):
         tempdir = tempfile.mkdtemp()
         try:
             os.chdir(tempdir)
-            subprocess.call(["trna-sort", "-n", "testing-run",
-                "/groups/merenlab/scui/meren-lab-tools/testing/test_MERGED_FINAL",
+            subprocess.call(["trna-profile", "-n", "testing-run",
+                "test_MERGED_FINAL",
                 "-s"])
 
-            with open("/groups/merenlab/scui/meren-lab-tools/testing/sort_stats_gold") as gold_file:
+            with open("sort_stats_gold") as gold_file:
                 with open("testing-run_SORTER_STATS.txt") as test_file:
                     gold_lines = gold_file.readlines()
                     test_lines = test_file.readlines()
