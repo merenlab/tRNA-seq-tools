@@ -6,8 +6,8 @@
 
 import sys
 import sqlite3
-import tables as t
-import db
+from . import tables as t
+from . import db
 
 __author__ = "Steven Cui"
 __copyright__ = "Copyright 2016, The University of Chicago"
@@ -92,7 +92,7 @@ class tRNADatabase:
             where_clause)
 
 
-        for key in profile_dict_no_trailer.keys():
+        for key in list(profile_dict_no_trailer.keys()):
             anticodon_list = profile_dict_no_trailer[key]["Anticodon"].split(",")
                 
             for anticodon in anticodon_list:

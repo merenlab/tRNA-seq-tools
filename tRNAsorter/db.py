@@ -22,7 +22,7 @@ class DB:
         self.db_path = db_path
 
         self.conn = sqlite3.connect(self.db_path)
-        print "successfully connected"
+        print("successfully connected")
 
         self.cursor = self.conn.cursor()
 
@@ -48,7 +48,7 @@ class DB:
     def create_table(self, table_name, fields, types):
         """Creates a table with the arguments given."""
         if len(fields) != len(types):
-            print "error: fields and types different sizes"
+            print("error: fields and types different sizes")
 
         db_fields = ", ".join(["%s %s" % (t[0], t[1]) for t in zip(fields,
             types)])
@@ -79,14 +79,14 @@ class DB:
         if not table_structure:
             table_structure = self.get_table_structure(table)
 
-        columns_to_return = range(0, len(table_structure))
+        columns_to_return = list(range(0, len(table_structure)))
 
         if omit_parent_column:
             if "__parent__" in table_structure:
                 columns_to_return.remove(table_structure.index("__parent__"))
 
         if len(columns_to_return) == 1:
-            print "nothing left to return"
+            print("nothing left to return")
 
         for row in rows:
             entry = {}
@@ -112,7 +112,7 @@ class DB:
         rows = self._exec("""SELECT * FROM %s WHERE %s""" % (table,
             where_clause)).fetchall()
         table_structure = self.get_table_structure(table)
-        columns_to_return = range(0, len(table_structure))
+        columns_to_return = list(range(0, len(table_structure)))
 
         for row in rows:
             entry = {}

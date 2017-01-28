@@ -2,15 +2,12 @@
 # pylint: disable=line-too-long
 """Classes to deal with tRNA sequences."""
 
-import os 
-import csv
 import sys
-import tempfile
-import extractor
-import dbops
+from . import extractor
+from . import dbops
 import Levenshtein as lev
 
-import Oligotyping.lib.fastalib as u 
+import tRNAsorter.fastalib as u 
 
 
 __author__ = "Steven Cui"
@@ -231,7 +228,7 @@ class Sorter:
         self.sort_stats = SorterStats()
         self.extractor = extractor.Extractor()
         self.db = None
-        seq_count_dict = {}                
+        self.seq_count_dict = {}
 
 
     def set_file_names(self, args):
@@ -253,7 +250,7 @@ class Sorter:
             if args.output_path.endswith(".db"):
                 self.tRNA_DB_file = args.output_path
             else:
-                print "given output file not correct format"
+                print("given output file not correct format")
                 sys.exit(1)
         else:
             self.tRNA_DB_file = args.sample_name + ".db"
@@ -321,7 +318,7 @@ class Sorter:
         return cur_seq_specs
 
 
-    def check_seq_count(self, cur_seq_specs)
+    def check_seq_count(self, cur_seq_specs):
         """Checks the sequence in current SeqSpecs to see if the seq has
         already been encountered already, increments count if it has,
         adds it to the dict.
@@ -362,7 +359,7 @@ class Sorter:
 
         # Start the sliding window at the last 24 bases, and move to the left
         # one at a time
-        for i in xrange(length - sub_size + 1):
+        for i in range(length - sub_size + 1):
             sub_str = seq[-(i + sub_size):(length - i)]
             t_loop_seq = sub_str[0:9]
             acceptor_seq = sub_str[-3:]
@@ -497,13 +494,13 @@ class Sorter:
 
     def run(self, args):
         """Run the sorter."""
-        print "sort started"
+        print("sort started")
         self.set_file_names(args)
         self.db = dbops.tRNADatabase(self.tRNA_DB_file)
 
 
        
-        while self.read_fasta.next():
+        while next(self.read_fasta):
             self.add_to_database()
 
         self.db.insert_seq_counts(self.seq_count_dict)
@@ -519,7 +516,7 @@ class Sorter:
        #    out_tmp.seek(0)
        #    self.fix_spacing_csv(out_tmp)
         
-        print "finished preliminary tRNA sort"
+        print("finished preliminary tRNA sort")
         
         self.db.insert_stats(self.sort_stats)
 
@@ -538,4 +535,4 @@ class Sorter:
        #
        #self.sort_stats.write_stats(self.sort_stats_write_file)
        #self.extractor.extractor_stats.write_stats(self.extractor.extractor_stats_file)
-        print "sort finished"
+        print("sort finished")

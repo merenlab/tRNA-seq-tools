@@ -2,12 +2,8 @@
 # pylint: disable=line-too-long
 """Classes to extract info from tRNA sequences."""
 
-import os 
-import sys
 import csv
 import Levenshtein as lev
-
-import Oligotyping.lib.fastalib as u
 
 __author__ = "Steven Cui"
 __copyright__ = "Copyright 2016, The University of Chicago"
@@ -147,8 +143,8 @@ class Extractor:
                         else:
                             continue
         else:
-            print "error: GTTC didn't match"
-            print seq[-24:-20]
+            print("error: GTTC didn't match")
+            print(seq[-24:-20])
 
         return anticodon_list
 
@@ -196,8 +192,8 @@ class Extractor:
                         else:
                             continue
         else:
-            print "error: GTTC didn't match"
-            print seq[-24:-20]
+            print("error: GTTC didn't match")
+            print(seq[-24:-20])
 
         return anticodon_list
 
@@ -221,7 +217,7 @@ class Extractor:
 
         for row in unassigned_rows:
             seq = row["Seq"].strip("-")
-            for key in match_dict.keys():
+            for key in list(match_dict.keys()):
                 if seq in key:
                     self.extractor_stats.subseq_match += 1
                     row["Anticodon"] = match_dict[key]
