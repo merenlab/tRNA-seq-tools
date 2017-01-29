@@ -71,9 +71,6 @@ class Extractor:
 
         self.extractor_stats = ExtractorStats()
 
-    def set_file_names(self, sample_name):
-        """Takes sample name and assigns output file variables"""
-        self.extractor_stats_file = sample_name + "_EXTRACTOR_STATS.txt"
 
     def pair_check(self, a_arm):
         """Checks a given anticodon arm for valid pairing"""
