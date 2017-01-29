@@ -25,6 +25,9 @@ __maintainer__ = "Steven Cui"
 __email__ = "stevencui729@gmail.com"
 
 
+pp = terminal.pretty_print
+
+
 class SorterStats:
     """This class handles keeping track of sort statistics."""
 
@@ -352,8 +355,10 @@ class Sorter:
                     self.db.insert_seq(sequence_object, sequence_id)
                 results_buffer = []
 
-            if self.sort_stats.total_seqs % 100 == 0:
-                self.progress.update('%d ...' % self.sort_stats.total_seqs)
+            if self.sort_stats.total_seqs % 1000 == 0:
+                t, p = self.sort_stats.total_seqs, self.sort_stats.total_passed
+                self.progress.update('%s :: %s (num tRNAs :: num raw reads so far): %.2f%% ...' %\
+                                        (pp(p), pp(t), p * 100 / t))
 
         self.progress.update('Writing %d items in the buffer to the DB ...' % len(results_buffer))
         for sequence_id, sequence_object in results_buffer:
