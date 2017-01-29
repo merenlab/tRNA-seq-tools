@@ -366,5 +366,7 @@ class Sorter:
         self.progress.end()
         self.db.db.disconnect()
 
-        self.run.info('Total seqs processed', self.sort_stats.total_seqs)
+        self.run.info('Total raw seqs processed', self.sort_stats.total_seqs)
+        self.run.info('Total tRNA seqs recovered', self.sort_stats.total_passed)
+        self.run.info('Total full length tRNA seqs', self.sort_stats.total_full_length)
         self.run.info('Output DB path', self.output_db_path)
