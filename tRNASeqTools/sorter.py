@@ -335,6 +335,10 @@ class Sorter:
 
         self.sanity_check()
 
+        # creating an empty profile databsae
+        profile_db = dbops.tRNADatabase(self.output_db_path)
+        profile_db.create(meta_values={'sample_name': self.sample_name})
+
         # a list buffer to keep results
         results_buffer = []
 
@@ -347,10 +351,10 @@ class Sorter:
         self.run.info('Sample name', self.sample_name)
         self.run.info('Input FASTA', self.input_fasta_path)
 
+        table_for_tRNA_seqs = dbops.TableFortRNASequences(self.output_db_path)
+
         self.progress.new('Profiling tRNAs')
         self.progress.update('...')
-
-        self.db = dbops.tRNADatabase(self.output_db_path)
         while next(input_fasta):
             self.sort_stats.total_seqs += 1
             is_tRNA_result = self.is_tRNA(input_fasta.seq.upper())
@@ -360,8 +364,7 @@ class Sorter:
 
             if sys.getsizeof(results_buffer) > memory_max:
                 self.progress.update('Writing %d items in the buffer to the DB ...' % len(results_buffer))
-                for sequence_id, sequence_object in results_buffer:
-                    self.db.insert_seq(sequence_object, sequence_id)
+                table_for_tRNA_seqs.append_sequences(results_buffer)
                 results_buffer = []
 
             if self.sort_stats.total_seqs % 1000 == 0:
@@ -370,19 +373,18 @@ class Sorter:
                                         (pp(p), pp(t), p * 100 / t))
 
         self.progress.update('Writing %d items in the buffer to the DB ...' % len(results_buffer))
-        for sequence_id, sequence_object in results_buffer:
-            self.db.insert_seq(sequence_object, sequence_id)
+        table_for_tRNA_seqs.append_sequences(results_buffer)
         results_buffer = []
 
         self.progress.update('Writing stats ...')
-        self.db.insert_stats(self.sort_stats)
+        dbops.TableFortRNAProfilingStats(self.output_db_path).insert(self.sort_stats)
 
         self.progress.end()
-        self.db.db.disconnect()
 
         self.run.info('Total raw seqs processed', self.sort_stats.total_seqs)
         self.run.info('Total tRNA seqs recovered', self.sort_stats.total_passed)
         self.run.info('Total full length tRNA seqs', self.sort_stats.total_full_length)
         self.run.info('Output DB path', self.output_db_path)
         self.run.info('Bye', terminal.get_date(), mc='green')
+
         self.run.quit()
