@@ -35,8 +35,8 @@ echo 'alias trna-seq-tools-activate="source ~/virtual-envs/tRNA-seq-tools/bin/ac
 Now you can activate your virtual environment and deactivate it the following way:
 
 ``` bash
-meren ~ $ trna-seq-tools-activate
-(tRNA-seq-tools) meren ~ $ trna-profile -h
+$ trna-seq-tools-activate
+(tRNA-seq-tools) $ trna-profile -h
 usage: trna-profile [-h] [-n SAMPLE_NAME] [-o OUTPUT_PATH] readfile
 
 Sort tRNAs
@@ -50,6 +50,19 @@ optional arguments:
                         sample name (to be used for naming output files
   -o OUTPUT_PATH, --output_path OUTPUT_PATH
                         output path (path where output will be redirected
-(tRNA-seq-tools) meren ~ $ deactivate
-meren ~ $
+(tRNA-seq-tools) $ deactivate
+```
+
+You want to run a small example?
+
+``` bash
+$ trna-seq-tools-activate
+$ cd ~/github/tRNA-seq-tools/testing
+$ ./01_mini_run.sh
+Sample name ..................................: test_sample
+Input FASTA ..................................: raw_tRNA_sequences.fa
+Total raw seqs processed .....................: 1,833
+Total tRNA seqs recovered ....................: 516
+Total full length tRNA seqs ..................: 48
+Output DB path ...............................: test-output/test_tRNA_profile.db
 ```
