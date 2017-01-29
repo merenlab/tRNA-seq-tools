@@ -331,7 +331,7 @@ class Sorter:
         results_buffer = []
 
         # an arbitrary max size to store and reset the buffer
-        memory_max = 200
+        memory_max = 2000000
 
         input_fasta = u.SequenceSource(self.input_fasta_path)
 
