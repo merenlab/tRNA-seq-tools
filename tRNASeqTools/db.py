@@ -1,12 +1,10 @@
 # -*- coding: utf-8
 # pylint: disable=line-too-long
 
-
-import os
 import sqlite3
 
 __author__ = "Steven Cui"
-__copyright__ = "Copyright 2016, The University of Chicago"
+__copyright__ = "Copyright 2017, Meren Lab"
 __credits__ = []
 __license__ = "GPL 3.0"
 __version__ = 0.1
@@ -22,7 +20,6 @@ class DB:
         self.db_path = db_path
 
         self.conn = sqlite3.connect(self.db_path)
-        print("successfully connected")
 
         self.cursor = self.conn.cursor()
 
