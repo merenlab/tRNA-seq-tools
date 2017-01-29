@@ -161,6 +161,11 @@ class Sorter:
         if filesnpaths.is_file_exists(self.output_db_path, dont_raise=True):
             raise ConfigError("The output file already exists. We don't like overwriting stuff here :/")
 
+        if '-' in self.sample_name:
+            self.sample_name = self.sample_name.replace('-', '_')
+            self.run.warning('I just replaced all "-" characters with "_" characters in your sample name. This program\
+                              does not like "-" characters in sample names.')
+
         utils.check_sample_id(self.sample_name)
         filesnpaths.is_output_file_writable(self.output_db_path)
         filesnpaths.is_file_fasta_formatted(self.input_fasta_path)
