@@ -167,9 +167,6 @@ class Sorter:
 
         self.input_fasta_path = os.path.abspath(self.input_fasta_path)
 
-        self.run.info('Sample name', self.sample_name)
-        self.run.info('Input FASTA', self.input_fasta_path)
-
 
     def check_divergence_pos(self, cur_seq_specs):
         """Takes a SeqSpecs class and updates statistics on divergence
@@ -341,6 +338,10 @@ class Sorter:
 
         input_fasta = u.SequenceSource(self.input_fasta_path)
 
+        self.run.info('Hi', terminal.get_date(), mc='green')
+        self.run.info('Sample name', self.sample_name)
+        self.run.info('Input FASTA', self.input_fasta_path)
+
         self.progress.new('Profiling tRNAs')
         self.progress.update('...')
 
@@ -378,3 +379,5 @@ class Sorter:
         self.run.info('Total tRNA seqs recovered', self.sort_stats.total_passed)
         self.run.info('Total full length tRNA seqs', self.sort_stats.total_full_length)
         self.run.info('Output DB path', self.output_db_path)
+        self.run.info('Bye', terminal.get_date(), mc='green')
+        self.run.quit()
