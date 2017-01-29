@@ -2,12 +2,18 @@
 # pylint: disable=line-too-long
 """Classes to deal with tRNA sequences."""
 
+import os
 import sys
-from . import extractor
-from . import dbops
 import Levenshtein as lev
 
-import tRNASeqTools.fastalib as u 
+import tRNASeqTools.fastalib as u
+import tRNASeqTools.dbops as dbops
+import tRNASeqTools.utils as utils
+import tRNASeqTools.terminal as terminal
+import tRNASeqTools.extractor as extractor
+import tRNASeqTools.filesnpaths as filesnpaths
+
+from tRNASeqTools.errors import ConfigError
 
 
 __author__ = "Steven Cui"
@@ -46,7 +52,7 @@ class SorterStats:
         self.acceptor_seq_rejected = 0
         self.both_rejected = 0
         self.short_rejected = 0
-       
+
 
     def gen_sql_query_info_tuple(self):
         info_string_list = []
@@ -118,21 +124,16 @@ class SeqSpecs:
 
 
 class Sorter:
-    """Class that handles the sorting of the seqs."""
-    
-    def __init__(self):
-        """Initializes variables for input/output files and statistics."""
-        self.passed_seqs_write_fasta = ""
-        self.rejected_seqs_write_fasta = ""
-        self.sort_stats_write_file = ""
-        self.read_fasta = ""
-        self.no_trailer_tabfile = ""
-        self.trailer_tabfile = ""
-        self.tRNA_DB_file = ""
+    def __init__(self, args):
+        """Class that handles the sorting of the seqs."""
 
-        self.fieldnames = ["ID", "Seq", "3-trailer", "t-loop", "acceptor",
-            "full-length", "Seq_length", "Trailer_length", "Anticodon"]
-        self.max_seq_width = len(self.fieldnames[1])
+        A = lambda x: args.__dict__[x] if x in args.__dict__ else None
+        self.sample_name = A('sample_name')
+        self.input_fasta_path = A('input_fasta')
+        self.output_db_path = A('output_db_path')
+
+        self.run = terminal.Run()
+        self.progress = terminal.Progress()
 
         self.sort_stats = SorterStats()
         self.extractor = extractor.Extractor()
@@ -140,26 +141,28 @@ class Sorter:
         self.seq_count_dict = {}
 
 
-    def set_file_names(self, args):
+    def sanity_check(self):
         """Takes command line arguments from args and assigns input/output file
         variables.
         """
 
-        self.sort_stats_write_file = args.sample_name + "_SORTER_STATS.txt"
-        self.read_fasta = u.SequenceSource(args.readfile)
-        self.no_trailer_tabfile = args.sample_name + "_TAB_NO_TRAILER"
-        self.trailer_tabfile = args.sample_name + "_TAB_TRAILER"
-        
-        self.extractor.set_file_names(args.sample_name)
-        
-        if args.output_path:
-            if args.output_path.endswith(".db"):
-                self.tRNA_DB_file = args.output_path
-            else:
-                print("given output file not correct format")
-                sys.exit(1)
-        else:
-            self.tRNA_DB_file = args.sample_name + ".db"
+        if not self.sample_name:
+            raise ConfigError('You must provide a sample name (which should uniquely describe this profile).')
+
+        if not self.output_db_path:
+            raise ConfigError('You must provide an output databaes file path (which should end with exteniosn ".db").')
+
+        if not self.output_db_path.endswith('.db'):
+            raise ConfigError('The output database file name must end with ".db".')
+
+        utils.check_sample_id(self.sample_name)
+        filesnpaths.is_output_file_writable(self.output_db_path)
+        filesnpaths.is_file_fasta_formatted(self.input_fasta_path)
+
+        self.input_fasta_path = os.path.abspath(self.input_fasta_path)
+
+        self.run.info('Sample name', self.sample_name)
+        self.run.info('Input FASTA', self.input_fasta_path)
 
 
     def check_divergence_pos(self, cur_seq_specs):
@@ -207,7 +210,7 @@ class Sorter:
         if cur_seq_specs.full_length:
             anticodon = ",".join(self.extractor.extract_anticodon(cur_seq_specs.seq))
             cur_seq_specs.anticodon = anticodon
-        else: 
+        else:
             anticodon = ",".join(self.extractor.extract_anticodon_not_full_length(cur_seq_specs.seq))
             cur_seq_specs.anticodon = anticodon
         return cur_seq_specs
@@ -268,12 +271,12 @@ class Sorter:
             sub_str = seq[-(i + sub_size):(length - i)]
             t_loop_seq = sub_str[0:9]
             acceptor_seq = sub_str[-3:]
-            t_loop_dist = (lev.distance("GTTC", sub_str[0:4]) 
+            t_loop_dist = (lev.distance("GTTC", sub_str[0:4])
                 + lev.distance("C", sub_str[8]))
             acceptor_dist = lev.distance("CCA", sub_str[-3:])
             mis_count = t_loop_dist + acceptor_dist
-           
-            if t_loop_dist < 1:    
+
+            if t_loop_dist < 1:
                 t_loop_error = False
             else:
                 t_loop_error = True
@@ -311,38 +314,57 @@ class Sorter:
         return res_tup
 
 
-    def add_to_database(self):
-        self.sort_stats.total_seqs += 1
-        is_tRNA_result = self.is_tRNA(self.read_fasta.seq.upper()) 
-
-        if is_tRNA_result[0]:
-            self.db.insert_seq(is_tRNA_result[1],
-                self.read_fasta.id.split('|')[0])
-
-
     def gen_sql_query_info_tuple(self):
         info_string_list = []
         info_string_list.append(self.total_seqs)
         info_string_list.append(self.total_rejected)
+
         return tuple(info_string_list)
 
 
-
-
-    def run(self, args):
+    def process(self):
         """Run the sorter."""
 
-        print("sort started")
-        self.set_file_names(args)
-        self.db = dbops.tRNADatabase(self.tRNA_DB_file)
+        self.sanity_check()
 
-        while next(self.read_fasta):
-            self.add_to_database()
+        # a list buffer to keep results
+        results_buffer = []
 
-        print("finished preliminary tRNA sort")
-        
+        # an arbitrary max size to store and reset the buffer
+        memory_max = 200
+
+        input_fasta = u.SequenceSource(self.input_fasta_path)
+
+        self.progress.new('Profiling tRNAs')
+        self.progress.update('...')
+
+        self.db = dbops.tRNADatabase(self.output_db_path)
+        while next(input_fasta):
+            self.sort_stats.total_seqs += 1
+            is_tRNA_result = self.is_tRNA(input_fasta.seq.upper())
+
+            if is_tRNA_result[0]:
+                results_buffer.append(('%s_%d' % (self.sample_name, input_fasta.pos), is_tRNA_result[1]))
+
+            if sys.getsizeof(results_buffer) > memory_max:
+                self.progress.update('Writing the buffer to the DB ...')
+                for sequence_id, sequence_object in results_buffer:
+                    self.db.insert_seq(sequence_object, sequence_id)
+                results_buffer = []
+
+            if self.sort_stats.total_seqs % 100 == 0:
+                self.progress.update('%d ...' % self.sort_stats.total_seqs)
+
+        self.progress.update('Writing the buffer to the DB ...')
+        for sequence_id, sequence_object in results_buffer:
+            self.db.insert_seq(sequence_object, sequence_id)
+        results_buffer = []
+
+        self.progress.update('Writing stats ...')
         self.db.insert_stats(self.sort_stats)
 
+        self.progress.end()
         self.db.db.disconnect()
 
-        print("sort finished")
+        self.run.info('Total seqs processed', self.sort_stats.total_seqs)
+        self.run.info('Output DB path', self.output_db_path)
