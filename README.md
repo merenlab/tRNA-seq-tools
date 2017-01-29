@@ -53,6 +53,8 @@ optional arguments:
 (tRNA-seq-tools) $ deactivate
 ```
 
+## Example run
+
 You want to run a small example?
 
 ``` bash
