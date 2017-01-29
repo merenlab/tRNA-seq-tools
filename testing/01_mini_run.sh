@@ -6,4 +6,4 @@ SETUP_WITH_OUTPUT_DIR $1
 #####################################
 
 INFO "Profiling raw tRNA sequences"
-trna-profile $files/raw_tRNA_sequences.fa -o $output_dir/test_tRNA_profile.db -n Test
+trna-profile $files/raw_tRNA_sequences.fa -o $output_dir/test_tRNA_profile.db -s test_sample
