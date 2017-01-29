@@ -10,6 +10,7 @@ __version__ = 0.1
 __maintainer__ = "Steven Cui"
 __email__ = "stevencui729@gmail.com"
 
+__profile_db__version__ = 1
 
 ###############################################################################
 #
