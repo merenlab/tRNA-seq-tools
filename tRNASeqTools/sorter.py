@@ -347,7 +347,7 @@ class Sorter:
                 results_buffer.append(('%s_%d' % (self.sample_name, input_fasta.pos), is_tRNA_result[1]))
 
             if sys.getsizeof(results_buffer) > memory_max:
-                self.progress.update('Writing the buffer to the DB ...')
+                self.progress.update('Writing %d items in the buffer to the DB ...' % len(results_buffer))
                 for sequence_id, sequence_object in results_buffer:
                     self.db.insert_seq(sequence_object, sequence_id)
                 results_buffer = []
@@ -355,7 +355,7 @@ class Sorter:
             if self.sort_stats.total_seqs % 100 == 0:
                 self.progress.update('%d ...' % self.sort_stats.total_seqs)
 
-        self.progress.update('Writing the buffer to the DB ...')
+        self.progress.update('Writing %d items in the buffer to the DB ...' % len(results_buffer))
         for sequence_id, sequence_object in results_buffer:
             self.db.insert_seq(sequence_object, sequence_id)
         results_buffer = []
