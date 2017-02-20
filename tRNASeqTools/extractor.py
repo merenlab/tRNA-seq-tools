@@ -5,12 +5,13 @@
 import csv
 import Levenshtein as lev
 
+import tRNASeqTools
 
 __author__ = "Steven Cui"
 __copyright__ = "Copyright 2016, The University of Chicago"
 __credits__ = []
 __license__ = "GPL 3.0"
-__version__ = 0.1
+__version__ = tRNASeqTools.__version__
 __maintainer__ = "Steven Cui"
 __email__ = "stevencui729@gmail.com"
 

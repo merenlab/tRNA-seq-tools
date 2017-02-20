@@ -3,6 +3,7 @@
 
 import sqlite3
 
+import tRNASeqTools
 import tRNASeqTools.filesnpaths as filesnpaths
 from tRNASeqTools.errors import ConfigError
 
@@ -10,7 +11,7 @@ __author__ = "Steven Cui"
 __copyright__ = "Copyright 2017, Meren Lab"
 __credits__ = []
 __license__ = "GPL 3.0"
-__version__ = 0.1
+__version__ = tRNASeqTools.__version__
 __maintainer__ = "Steven Cui"
 __email__ = "stevencui729@gmail.com"
 
