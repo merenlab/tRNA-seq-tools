@@ -109,7 +109,7 @@ class tRNADatabase:
                         ('total_passed', 'Total passed as tRNA seq', 'green'),
                         ('total_full_length', 'Total full length tRNA seqs', 'green'),
                         ('total_rejected', 'Total rejected', 'red'),
-                        ('short_rejected', 'Rejected due to lenght', None),
+                        ('short_rejected', 'Rejected due to length', None),
                         ('acceptor_seq_rejected', 'Rejected due to acceptor seq', None),
                         ('t_loop_seq_rejected', 'Rejected due to t-loop seq', None),
                         ('both_rejected', 'Rejected due to both', None),
