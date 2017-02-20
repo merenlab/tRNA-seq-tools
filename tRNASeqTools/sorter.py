@@ -4,8 +4,10 @@
 
 import os
 import sys
+import collections
 import Levenshtein as lev
 
+import tRNASeqTools.tables as t
 import tRNASeqTools.fastalib as u
 import tRNASeqTools.dbops as dbops
 import tRNASeqTools.utils as utils
@@ -26,60 +28,6 @@ __email__ = "stevencui729@gmail.com"
 
 
 pp = terminal.pretty_print
-
-
-class SorterStats:
-    """This class handles keeping track of sort statistics."""
-
-    def __init__(self):
-        """Initializes statistics."""
-        self.total_seqs = 0
-        self.total_rejected = 0
-        self.total_passed = 0
-        self.num_trailer = 0
-        self.total_full_length = 0
-
-        self.no_divergence = 0
-        self.t_loop_divergence = 0
-        self.div_at_0 = 0
-        self.div_at_1 = 0
-        self.div_at_2 = 0
-        self.div_at_3 = 0
-        self.div_at_8 = 0
-        self.acceptor_divergence = 0
-        self.div_at_neg_1 = 0
-        self.div_at_neg_2 = 0
-        self.div_at_neg_3 = 0
-
-        self.t_loop_seq_rejected = 0
-        self.acceptor_seq_rejected = 0
-        self.both_rejected = 0
-        self.short_rejected = 0
-
-
-    def gen_sql_query_info_tuple(self):
-        info_string_list = []
-        info_string_list.append(self.total_seqs)
-        info_string_list.append(self.total_rejected)
-        info_string_list.append(self.total_passed)
-        info_string_list.append(self.num_trailer)
-        info_string_list.append(self.total_full_length)
-        info_string_list.append(self.no_divergence)
-        info_string_list.append(self.t_loop_divergence)
-        info_string_list.append(self.div_at_0)
-        info_string_list.append(self.div_at_1)
-        info_string_list.append(self.div_at_2)
-        info_string_list.append(self.div_at_3)
-        info_string_list.append(self.div_at_8)
-        info_string_list.append(self.acceptor_divergence)
-        info_string_list.append(self.div_at_neg_1)
-        info_string_list.append(self.div_at_neg_2)
-        info_string_list.append(self.div_at_neg_3)
-        info_string_list.append(self.t_loop_seq_rejected)
-        info_string_list.append(self.acceptor_seq_rejected)
-        info_string_list.append(self.both_rejected)
-        info_string_list.append(self.short_rejected)
-        return tuple(info_string_list)
 
 
 class SeqSpecs:
@@ -138,7 +86,8 @@ class Sorter:
         self.run = terminal.Run()
         self.progress = terminal.Progress()
 
-        self.sort_stats = SorterStats()
+        self.stats_dict = collections.Counter()
+
         self.extractor = extractor.Extractor()
         self.db = None
         self.seq_count_dict = {}
@@ -178,27 +127,27 @@ class Sorter:
         position.
         """
         if cur_seq_specs.t_loop_error:
-            self.sort_stats.t_loop_divergence += 1
+            self.stats_dict['t_loop_divergence'] += 1
             if cur_seq_specs.seq_sub[0] != "G":
-                self.sort_stats.div_at_0 += 1
+                self.stats_dict['div_at_0'] += 1
             elif cur_seq_specs.seq_sub[1] != "T":
-                self.sort_stats.div_at_1 += 1
+                self.stats_dict['div_at_1'] += 1
             elif cur_seq_specs.seq_sub[2] != "T":
-                self.sort_stats.div_at_2 += 1
+                self.stats_dict['div_at_2'] += 1
             elif cur_seq_specs.seq_sub[3] != "C":
-                self.sort_stats.div_at_3 += 1
+                self.stats_dict['div_at_3'] += 1
             elif cur_seq_specs.seq_sub[8] != "C":
-                self.sort_stats.div_at_8 += 1
+                self.stats_dict['div_at_8'] += 1
         elif cur_seq_specs.acceptor_error:
-            self.sort_stats.acceptor_divergence += 1
+            self.stats_dict['acceptor_divergence'] += 1
             if cur_seq_specs.seq_sub[-3] != "C":
-                self.sort_stats.div_at_neg_3 += 1
+                self.stats_dict['div_at_neg_3'] += 1
             elif cur_seq_specs.seq_sub[-2] != "C":
-                self.sort_stats.div_at_neg_2 += 1
+                self.stats_dict['div_at_neg_2'] += 1
             elif cur_seq_specs.seq_sub[-1] != "A":
-                self.sort_stats.div_at_neg_1 += 1
+                self.stats_dict['div_at_neg_1'] += 1
         else:
-            self.sort_stats.no_divergence += 1
+            self.stats_dict['no_divergence'] += 1
 
 
     def check_full_length(self, cur_seq_specs):
@@ -208,7 +157,7 @@ class Sorter:
         """
         if cur_seq_specs.length > 70 and cur_seq_specs.length < 100:
             if cur_seq_specs.seq[7] == "T" and cur_seq_specs.seq[13] == "A":
-                self.sort_stats.total_full_length += 1
+                self.stats_dict['total_full_length'] += 1
                 cur_seq_specs.full_length = True
         return cur_seq_specs
 
@@ -255,7 +204,7 @@ class Sorter:
         """Consdolidates all the methods run specifically for a confirmed passed
         sequence.
         """
-        self.sort_stats.total_passed += 1
+        self.stats_dict['total_passed'] += 1
         self.check_divergence_pos(cur_seq_specs)
         cur_seq_specs = self.split_3_trailer(cur_seq_specs, i)
         cur_seq_specs = self.check_full_length(cur_seq_specs)
@@ -309,14 +258,14 @@ class Sorter:
         # Handles a failed sequence
         if cur_seq_specs.t_loop_error and cur_seq_specs.acceptor_error:
             if length < 24:
-                self.sort_stats.short_rejected += 1
+                self.stats_dict['short_rejected'] += 1
             else:
-                self.sort_stats.both_rejected += 1
+                self.stats_dict['both_rejected'] += 1
         elif cur_seq_specs.acceptor_error and not cur_seq_specs.t_loop_error:
-            self.sort_stats.acceptor_seq_rejected += 1
+            self.stats_dict['acceptor_seq_rejected'] += 1
         elif cur_seq_specs.t_loop_error and not cur_seq_specs.acceptor_error:
-            self.sort_stats.t_loop_seq_rejected += 1
-        self.sort_stats.total_rejected += 1
+            self.stats_dict['t_loop_seq_rejected'] += 1
+        self.stats_dict['total_rejected'] += 1
         res_tup = (False, cur_seq_specs)
 
         return res_tup
@@ -356,7 +305,7 @@ class Sorter:
         self.progress.new('Profiling tRNAs')
         self.progress.update('...')
         while next(input_fasta):
-            self.sort_stats.total_seqs += 1
+            self.stats_dict['total_seqs'] += 1
             is_tRNA_result = self.is_tRNA(input_fasta.seq.upper())
 
             if is_tRNA_result[0]:
@@ -367,8 +316,8 @@ class Sorter:
                 table_for_tRNA_seqs.append_sequences(results_buffer)
                 results_buffer = []
 
-            if self.sort_stats.total_seqs % 1000 == 0:
-                t, p = self.sort_stats.total_seqs, self.sort_stats.total_passed
+            if self.stats_dict['total_seqs'] % 1000 == 0:
+                t, p = self.stats_dict['total_seqs'], self.stats_dict['total_passed']
                 self.progress.update('%s :: %s (num tRNAs :: num raw reads so far): %.2f%% ...' %\
                                         (pp(p), pp(t), p * 100 / t))
 
@@ -376,14 +325,19 @@ class Sorter:
         table_for_tRNA_seqs.append_sequences(results_buffer)
         results_buffer = []
 
+        # essentially we are done here. let's populate the stats table:
+        profile_db = dbops.tRNADatabase(self.output_db_path)
         self.progress.update('Writing stats ...')
-        dbops.TableFortRNAProfilingStats(self.output_db_path).insert(self.sort_stats)
+        for key in self.stats_dict:
+            profile_db.db.set_stat_value(key, self.stats_dict[key])
+        profile_db.disconnect()
 
         self.progress.end()
 
-        self.run.info('Total raw seqs processed', self.sort_stats.total_seqs)
-        self.run.info('Total tRNA seqs recovered', self.sort_stats.total_passed)
-        self.run.info('Total full length tRNA seqs', self.sort_stats.total_full_length)
+
+        self.run.info('Total raw seqs processed', self.stats_dict['total_seqs'])
+        self.run.info('Total tRNA seqs recovered', self.stats_dict['total_passed'])
+        self.run.info('Total full length tRNA seqs', self.stats_dict['total_full_length'])
         self.run.info('Output DB path', self.output_db_path)
         self.run.info('Bye', terminal.get_date(), mc='green')
 
