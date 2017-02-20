@@ -35,6 +35,7 @@ class DB:
 
         if new_database:
             self.create_self()
+            self.create_stats()
             self.set_version(client_version)
         else:
 
@@ -57,6 +58,11 @@ class DB:
             return self.get_meta_value('version')
         except:
             raise ConfigError("%s does not seem to be a valid tRNA-seq database :/" % self.db_path)
+
+
+    def set_stat_value(self, key, value):
+        self._exec('''INSERT INTO stats VALUES(?,?)''', (key, value,))
+        self.commit()
 
 
     def set_meta_value(self, key, value):
@@ -107,16 +113,21 @@ class DB:
         self.commit()
 
 
+    def create_stats(self):
+        """Creates an empty stats table."""
+        self._exec("""CREATE TABLE stats (key text, value numeric)""")
+        self.commit()
+
+
     def create_table(self, table_name, fields, types):
         """Creates a table with the arguments given."""
         if len(fields) != len(types):
-            print("error: fields and types different sizes")
+            raise ConfigError("Fields and types have different sizes for table '%s'." % (table_name))
 
-        db_fields = ", ".join(["%s %s" % (t[0], t[1]) for t in zip(fields,
-            types)])
+        db_fields = ", ".join(["%s %s" % (t[0], t[1]) for t in zip(fields, types)])
 
-        self._exec("""CREATE TABLE IF NOT EXISTS %s (%s)""" % (table_name,
-            db_fields))
+        self._exec("""CREATE TABLE IF NOT EXISTS %s (%s)""" % (table_name, db_fields))
+
         self.commit()
 
 
