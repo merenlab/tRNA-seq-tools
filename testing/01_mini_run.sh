@@ -15,3 +15,6 @@ trna-get-db-info -p $output_dir/test_tRNA_profile.db
 
 INFO "Gen anti-codon profile"
 trna-gen-anticodon-profile $output_dir/test_tRNA_profile.db -o $output_dir/anti-codon-profile.txt --percent-norm
+
+INFO "Get tRNA sequences"
+trna-get-sequences -p $output_dir/test_tRNA_profile.db -o $output_dir/tRNA_sequences.fa

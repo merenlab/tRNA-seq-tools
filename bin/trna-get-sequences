@@ -1,0 +1,85 @@
+#!/usr/bin/env python
+# -*- coding: utf-8
+
+import os
+import sys
+import argparse
+
+import tRNASeqTools
+import tRNASeqTools.dbops as dbops
+import tRNASeqTools.utils as utils
+import tRNASeqTools.terminal as terminal
+import tRNASeqTools.filesnpaths as filesnpaths
+
+from tRNASeqTools.errors import ConfigError
+
+
+__author__ = "A. Murat Eren"
+__copyright__ = "Copyright 2017, Meren Lab"
+__credits__ = []
+__license__ = "GPL 3.0"
+__version__ = tRNASeqTools.__version__
+__maintainer__ = "A. Murat Eren"
+__email__ = "a.murat.eren@gmail.com"
+
+
+run = terminal.Run()
+progress = terminal.Progress()
+pp = terminal.pretty_print
+
+
+def main(args):
+    if filesnpaths.is_file_exists(args.output_file, dont_raise=True):
+        os.remove(args.output_file)
+
+    filesnpaths.is_output_file_writable(args.output_file)
+
+    profile_db_path = args.profile_db
+    filesnpaths.is_file_exists(profile_db_path)
+
+    run.info('Profile database', profile_db_path)
+
+    profile_db = dbops.tRNADatabase(profile_db_path)
+    sample_name = profile_db.meta['sample_name']
+
+    run.info('Sample', sample_name)
+    run.info('Num sequences in DB', pp(profile_db.stats['total_passed']), lc='green')
+    run.info('Full-length only', args.full_length_only)
+    run.info('Min sequence length to report', args.min_sequence_length)
+    run.info('Max sequence length to report', args.max_sequence_length)
+    run.info('Anticodons to focus', args.anticodons)
+
+    progress.new('Processing seqeunces')
+    progress.update('...')
+
+    sequences_dict = profile_db.get_sequences_dict(args.full_length_only,
+                                                   args.min_sequence_length,
+                                                   args.max_sequence_length,
+                                                   args.anticodons)
+
+    progress.end()
+
+    run.info('Num sequences reported', pp(len(sequences_dict)))
+
+    utils.store_dict_as_FASTA_file(sequences_dict, args.output_file)
+
+    run.info('Sequences', args.output_file)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Returns tRNA seqeunces from a given profile")
+    parser.add_argument(*tRNASeqTools.A('profile-db'), **tRNASeqTools.K('profile-db'))
+    parser.add_argument(*tRNASeqTools.A('output-file'), **tRNASeqTools.K('output-file', {'required': True}))
+    parser.add_argument(*tRNASeqTools.A('full-length-only'), **tRNASeqTools.K('full-length-only'))
+    parser.add_argument(*tRNASeqTools.A('min-sequence-length'), **tRNASeqTools.K('min-sequence-length'))
+    parser.add_argument(*tRNASeqTools.A('max-sequence-length'), **tRNASeqTools.K('max-sequence-length'))
+    parser.add_argument(*tRNASeqTools.A('anticodons'), **tRNASeqTools.K('anticodons'))
+
+    args = parser.parse_args()
+    
+    try:
+        main(args)
+    except ConfigError as e:
+        print(e)
+        sys.exit(-1)
+        
