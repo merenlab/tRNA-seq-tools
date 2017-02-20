@@ -7,7 +7,6 @@ import sys
 import collections
 import Levenshtein as lev
 
-import tRNASeqTools.tables as t
 import tRNASeqTools.fastalib as u
 import tRNASeqTools.dbops as dbops
 import tRNASeqTools.utils as utils
