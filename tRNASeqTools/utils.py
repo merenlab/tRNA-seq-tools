@@ -5,6 +5,9 @@
 
 import os
 import string
+import textwrap
+
+import tRNASeqTools.filesnpaths as filesnpaths
 
 from tRNASeqTools.errors import ConfigError
 
@@ -67,5 +70,17 @@ def store_dict_as_TAB_delimited_file(d, output_path, headers=None, file_obj=None
 
     f.close()
     return output_path
+
+
+def store_dict_as_FASTA_file(d, output_file_path, wrap_from=200):
+    filesnpaths.is_output_file_writable(output_file_path)
+    output = open(output_file_path, 'w')
+
+    for key in d:
+        output.write('>%s\n' % key)
+        output.write('%s\n' % textwrap.fill(d[key], wrap_from, break_on_hyphens=False))
+
+    output.close()
+    return True
 
 
