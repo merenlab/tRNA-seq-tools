@@ -23,6 +23,38 @@ D = {
              'required': True,
              'help': "tRNA-seq-tools profile database"}
                 ),
+    'output-file': (
+            ['-o', '--output-file'],
+            {'metavar': 'FILE_PATH',
+             'type': str,
+             'help': "File path to store results."}
+                ),
+    'full-length-only': (
+            ['--full-length-only'],
+            {'default': False,
+             'action': 'store_true',
+             'help': "Only full-length seqeunces"}
+                ),
+    'min-sequence-length': (
+            ['-l', '--min-sequence-length'],
+            {'metavar': 'INT',
+             'default': None,
+             'type': int,
+             'help': "Minimum sequence length"}
+                ),
+    'max-sequence-length': (
+            ['-L', '--max-sequence-length'],
+            {'metavar': 'INT',
+             'default': None,
+             'type': int,
+             'help': "Maximum sequence length"}
+                ),
+    'anticodons': (
+            ['-A', '--anticodons'],
+            {'metavar': 'ANTICODON(S)',
+             'type': str,
+             'help': "Comma-separated list of anticodonds to focus."}
+                ),
 }
 
 # two functions that works with the dictionary above.
