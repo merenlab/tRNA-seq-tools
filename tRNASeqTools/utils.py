@@ -3,7 +3,7 @@
 
 """Lonely, helper functions that are broadly used and don't fit anywhere"""
 
-
+import os
 import string
 
 from tRNASeqTools.errors import ConfigError
@@ -33,5 +33,39 @@ def check_sample_id(sample_id):
             raise ConfigError("Sample name ('%s') contains characters that anvio does not like. Please\
                                 limit the characters that make up the project name to ASCII letters,\
                                 digits, and the underscore character ('_')." % sample_id)
+
+
+def store_dict_as_TAB_delimited_file(d, output_path, headers=None, file_obj=None):
+    if not file_obj and not os.access(os.path.dirname(os.path.abspath(output_path)), os.W_OK):
+        raise ConfigError("The output file path '%s' is not writable..." % output_path)
+
+    if not file_obj:
+        f = open(output_path, 'w')
+    else:
+        f = file_obj
+
+    if not headers:
+        headers = ['key'] + sorted(list(d.values())[0].keys())
+
+    f.write('%s\n' % '\t'.join(headers))
+
+    for k in sorted(d.keys()):
+        line = [str(k)]
+        for header in headers[1:]:
+            try:
+                val = d[k][header]
+            except KeyError:
+                raise ConfigError("Header ('%s') is not found in the dict :/" % (header))
+            except TypeError:
+                raise ConfigError("Your dictionary is not properly formatted to be exported\
+                                    as a TAB-delimited file :/ You ask for '%s', but it is not\
+                                    even a key in the dictionary" % (header))
+
+            line.append(str(val) if not isinstance(val, type(None)) else '')
+
+        f.write('%s\n' % '\t'.join(line))
+
+    f.close()
+    return output_path
 
 
