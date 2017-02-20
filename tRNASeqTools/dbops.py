@@ -4,6 +4,7 @@
 import os
 import time
 
+import tRNASeqTools
 import tRNASeqTools.db as db
 import tRNASeqTools.tables as t
 import tRNASeqTools.terminal as terminal
@@ -13,7 +14,7 @@ __author__ = "Steven Cui"
 __copyright__ = "Copyright 2016, The University of Chicago"
 __credits__ = []
 __license__ = "GPL 3.0"
-__version__ = 0.1
+__version__ = tRNASeqTools.__version__
 __maintainer__ = "Steven Cui"
 __email__ = "stevencui729@gmail.com"
 
@@ -37,9 +38,11 @@ class tRNADatabase:
 
     def init(self):
         if os.path.exists(self.db_path):
-            self.db = db.DB(self.db_path, t.__profile_db__version__)
+            self.db = db.DB(self.db_path, t.profile_db_version)
             meta_table = self.db.get_table_as_dict('self')
             self.meta = dict([(k, meta_table[k]['value']) for k in meta_table])
+            stats_table = self.db.get_table_as_dict('stats')
+            self.stats = dict([(k, int(stats_table[k]['value'])) for k in stats_table])
 
             self.run.info('tRNA Profile database', 'An existing database, %s, has been initiated.' % self.db_path, quiet=self.quiet)
             self.run.info('Sample name', self.meta['sample_name'], quiet=self.quiet)
@@ -48,7 +51,7 @@ class tRNADatabase:
 
 
     def create(self, meta_values={}):
-        self.db = db.DB(self.db_path, t.__profile_db__version__, new_database=True)
+        self.db = db.DB(self.db_path, t.profile_db_version, new_database=True)
 
         for key in meta_values:
             self.db.set_meta_value(key, meta_values[key])
@@ -57,7 +60,6 @@ class tRNADatabase:
 
         # creating empty default tables
         self.db.create_table(t.profile_table_name, t.profile_table_structure, t.profile_table_types)
-        self.db.create_table(t.stats_table_name, t.stats_table_structure, t.stats_table_types)
 
         self.disconnect()
 
@@ -102,6 +104,34 @@ class tRNADatabase:
         return anticodon_count_dict
 
 
+    def print_stats(self):
+        pretty_names = [('total_seqs', 'Total num seqs', None),
+                        ('total_passed', 'Total passed as tRNA seq', 'green'),
+                        ('total_full_length', 'Total full length tRNA seqs', 'green'),
+                        ('total_rejected', 'Total rejected', 'red'),
+                        ('short_rejected', 'Rejected due to lenght', None),
+                        ('acceptor_seq_rejected', 'Rejected due to acceptor seq', None),
+                        ('t_loop_seq_rejected', 'Rejected due to t-loop seq', None),
+                        ('both_rejected', 'Rejected due to both', None),
+                        ('no_divergence', 'No divergence', None),
+                        ('t_loop_divergence', 'Divergence at t-loop', None),
+                        ('div_at_0', 't-loop divergence at pos 0', None),
+                        ('div_at_1', 't-loop divergence at pos 1', None),
+                        ('div_at_2', 't-loop divergence at pos 2', None),
+                        ('div_at_3', 't-loop divergence at pos 3', None),
+                        ('div_at_8', 't-loop divergence at pos 8', None),
+                        ('acceptor_divergence', 'Divergence at acceptor', None),
+                        ('div_at_neg_1', 'Acceptor divergence at pos -1', None),
+                        ('div_at_neg_2', 'Acceptor divergence at pos -2', None),
+                        ('div_at_neg_3', 'Acceptor divergence at pos -3', None)]
+
+        for key, label, color in pretty_names:
+            if color:
+                self.run.info(label, self.stats[key], mc=color)
+            else:
+                self.run.info(label, self.stats[key])
+
+
 class TableFortRNASequences:
     """A class to populate the profile databse with tRNA results"""
     
@@ -119,25 +149,4 @@ class TableFortRNASequences:
 
         profile_db = tRNADatabase(self.db_path)
         profile_db.db._exec_many("""INSERT INTO %s VALUES (?,?,?,?,?,?,?,?,?)""" % (t.profile_table_name), values)
-        profile_db.disconnect()
-
-
-class TableFortRNAProfilingStats:
-    """A class to populate and process stats generated during the tRNA profiling"""
-    
-    def __init__(self, db_path, run=run, progress=progress):
-        self.db_path = db_path
-        self.run = run
-        self.progress = progress
-
-
-    def insert(self, sorter_stats):
-        """Insert a seq and its info into the profile table in a tRNA datbase."""
-
-        profile_db = tRNADatabase(self.db_path)
-        profile_db.db._exec("""INSERT INTO %s VALUES (%s)""" % \
-                        (t.stats_table_name, (", ".join(['?'] *
-                         len(t.stats_table_structure)))),
-                         sorter_stats.gen_sql_query_info_tuple())
-
         profile_db.disconnect()
