@@ -70,8 +70,32 @@ class tRNADatabase:
         self.db.disconnect()
 
 
-    def gen_anticodon_profile(self, only_full_length, min_seq_length, 
-        max_seq_length, anticodons): 
+    def get_sequences_dict(self, only_full_length, min_seq_length, max_seq_length, anticodons=None): 
+        """returns an anticodon profile from the database"""
+
+        where_clause = "Three_trailer IS NULL AND Anticodon IS NOT NULL"
+        if only_full_length:
+            where_clause += " AND Full_length = 'True'"
+        if min_seq_length:
+            where_clause += (" AND Seq_length >= " + str(min_seq_length))
+        if max_seq_length:
+            where_clause += (" AND Seq_length <= " + str(max_seq_length))
+        if anticodons:
+            spec_anticodons_list = anticodons.split(",")
+            or_string = " OR ".join(["Anticodon IN ('" + spec_anticodon + "')"
+                for spec_anticodon in spec_anticodons_list])
+            where_clause += " AND (" + or_string + ")"
+
+        sequences_dict = {}
+        d = self.db.get_some_rows_from_table_as_dict(t.profile_table_name, where_clause)
+        for entry in d:
+            seq_id = '|'.join([entry] + ['%s:%s' % (key, str(d[entry][key])) for key in ['Full_length', 'Anticodon', 'Acceptor']])
+            sequences_dict[seq_id] = d[entry]['Seq']
+
+        return sequences_dict
+
+
+    def gen_anticodon_profile(self, only_full_length, min_seq_length, max_seq_length, anticodons): 
         """returns an anticodon profile from the database"""
 
         anticodon_count_dict = {}
@@ -89,9 +113,7 @@ class tRNADatabase:
                 for spec_anticodon in spec_anticodons_list])
             where_clause += " AND (" + or_string + ")"
 
-        profile_dict_no_trailer = self.db.get_some_rows_from_table_as_dict(t.profile_table_name,
-            where_clause)
-
+        profile_dict_no_trailer = self.db.get_some_rows_from_table_as_dict(t.profile_table_name, where_clause)
 
         for key in list(profile_dict_no_trailer.keys()):
             anticodon_list = profile_dict_no_trailer[key]["Anticodon"].split(",")
@@ -101,6 +123,7 @@ class tRNADatabase:
                     anticodon_count_dict[anticodon] += 1
                 else:
                     anticodon_count_dict[anticodon] = 1
+
         return anticodon_count_dict
 
 
