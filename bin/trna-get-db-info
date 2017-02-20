@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+# -*- coding: utf-8
+"""Print information about a tRNA profile database"""
+
+import sys
+
+import tRNASeqTools
+import tRNASeqTools.terminal as terminal
+import tRNASeqTools.dbops as dbops
+
+from tRNASeqTools.errors import ConfigError
+
+__author__ = "A. Murat Eren"
+__copyright__ = "Copyright 2017, Meren Lab"
+__credits__ = []
+__license__ = "GPL 3.0"
+__version__ = tRNASeqTools.__version__
+__maintainer__ = "A. Murat Eren"
+__email__ = "a.murat.eren@gmail.com"
+
+
+run = terminal.Run()
+progress = terminal.Progress()
+
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Get stats from a tRNA profile database.")
+    parser.add_argument(*tRNASeqTools.A('profile-db'), **tRNASeqTools.K('profile-db'))
+    args = parser.parse_args()
+
+    try:
+        profile_db = dbops.tRNADatabase(args.profile_db)
+        profile_db.print_stats()
+        profile_db.disconnect()
+    except ConfigError as e:
+        print(e)
+        sys.exit(-1)
