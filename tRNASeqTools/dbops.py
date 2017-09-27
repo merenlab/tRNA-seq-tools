@@ -89,8 +89,13 @@ class tRNADatabase:
         sequences_dict = {}
         d = self.db.get_some_rows_from_table_as_dict(t.profile_table_name, where_clause)
         for entry in d:
-            seq_id = '|'.join([entry] + ['%s:%s' % (key, str(d[entry][key])) for key in ['Full_length', 'Anticodon', 'Acceptor']])
-            sequences_dict[seq_id] = d[entry]['Seq']
+            seq = d[entry]['Seq']
+            props = dict([(key, str(d[entry][key])) for key in ['Full_length', 'Anticodon', 'Acceptor']])
+
+            if seq in sequences_dict:
+                sequences_dict[seq]['ids'].add(entry)
+            else:
+                sequences_dict[seq] = {'props': props, 'ids': set([entry])}
 
         return sequences_dict
 
