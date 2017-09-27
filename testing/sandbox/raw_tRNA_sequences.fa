@@ -1886,7 +1886,13 @@ acctgtcgccacgctctccctctccccccgtccgcctcccgggcgggcgtgggggtggtggccgggccgcccctcccacg
 cactggaggtcgagggttcgagccccttccaggtcgcca
 >test_1300|HWI-D00422:265:C7TKHANXX:3:1101:8074:3174 1:N:0:TTAGGC|o:63|m/o:0.000000|MR:n=0;r1=0;r2=0|Q30:n/a|CO:0|mismatches:0
 acagcccaccaagatcggaagagcacacgtctagttctacagtccgacgatcctcagctgtct
->test_1301|HWI-D00422:265:C7TKHANXX:3:1101:8110:3230 1:N:0:TTAGGC|o:76|m/o:0.000000|MR:n=0;r1=0;r2=0|Q30:n/a|CO:1|mismatches:0
+>test_1301.0|HWI-D00422:265:C7TKHANXX:3:1101:8110:3230 1:N:0:TTAGGC|o:76|m/o:0.000000|MR:n=0;r1=0;r2=0|Q30:n/a|CO:1|mismatches:0
+tccggcatagctcatttggtagagcacctgactgttaatcaggctgtcgacggttcgagtctgcctgccggagcca
+>test_1301.1|HWI-D00422:265:C7TKHANXX:3:1101:8110:3230 1:N:0:TTAGGC|o:76|m/o:0.000000|MR:n=0;r1=0;r2=0|Q30:n/a|CO:1|mismatches:0
+tccggcatagctcatttggtagagcacctgactgttaatcaggctgtcgacggttcgagtctgcctgccggagcca
+>test_1301.2|HWI-D00422:265:C7TKHANXX:3:1101:8110:3230 1:N:0:TTAGGC|o:76|m/o:0.000000|MR:n=0;r1=0;r2=0|Q30:n/a|CO:1|mismatches:0
+tccggcatagctcatttggtagagcacctgactgttaatcaggctgtcgacggttcgagtctgcctgccggagcca
+>test_1301.3|HWI-D00422:265:C7TKHANXX:3:1101:8110:3230 1:N:0:TTAGGC|o:76|m/o:0.000000|MR:n=0;r1=0;r2=0|Q30:n/a|CO:1|mismatches:0
 tccggcatagctcatttggtagagcacctgactgttaatcaggctgtcgacggttcgagtctgcctgccggagcca
 >test_1302|HWI-D00422:265:C7TKHANXX:3:1101:8270:3043 1:N:0:TTAGGC|o:85|m/o:0.000000|MR:n=0;r1=0;r2=0|Q30:n/a|CO:0|mismatches:0
 gcaagattttcattcttgaaagagatcggaagagcacacgtctagttctacagtccgacgatctctatcggttaggacgcaagat
