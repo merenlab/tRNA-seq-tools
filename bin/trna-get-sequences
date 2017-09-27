@@ -59,9 +59,10 @@ def main(args):
 
     progress.end()
 
-    run.info('Num sequences reported', pp(len(sequences_dict)))
+    run.info('Number of unique sequences', pp(len(sequences_dict)))
+    run.info('Sequences will be reported as unique', args.unique_sequences, mc='red')
 
-    utils.store_dict_as_FASTA_file(sequences_dict, args.output_file)
+    utils.store_dict_as_FASTA_file(sequences_dict, args.output_file, report_unique_sequences=args.unique_sequences)
 
     run.info('Sequences', args.output_file)
 
@@ -71,15 +72,15 @@ if __name__ == '__main__':
     parser.add_argument(*tRNASeqTools.A('profile-db'), **tRNASeqTools.K('profile-db'))
     parser.add_argument(*tRNASeqTools.A('output-file'), **tRNASeqTools.K('output-file', {'required': True}))
     parser.add_argument(*tRNASeqTools.A('full-length-only'), **tRNASeqTools.K('full-length-only'))
+    parser.add_argument(*tRNASeqTools.A('unique-sequences'), **tRNASeqTools.K('unique-sequences'))
     parser.add_argument(*tRNASeqTools.A('min-sequence-length'), **tRNASeqTools.K('min-sequence-length'))
     parser.add_argument(*tRNASeqTools.A('max-sequence-length'), **tRNASeqTools.K('max-sequence-length'))
     parser.add_argument(*tRNASeqTools.A('anticodons'), **tRNASeqTools.K('anticodons'))
 
     args = parser.parse_args()
-    
+
     try:
         main(args)
     except ConfigError as e:
         print(e)
         sys.exit(-1)
-        
