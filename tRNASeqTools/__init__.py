@@ -35,6 +35,12 @@ D = {
              'action': 'store_true',
              'help': "Only full-length seqeunces"}
                 ),
+    'unique-sequences': (
+            ['--unique-sequences'],
+            {'default': False,
+             'action': 'store_true',
+             'help': "Unique reported sequences with frequencies"}
+                ),
     'min-sequence-length': (
             ['-l', '--min-sequence-length'],
             {'metavar': 'INT',
