@@ -6,6 +6,7 @@ import csv
 import Levenshtein as lev
 
 import tRNASeqTools
+import tRNASeqTools.filters as filters
 
 __author__ = "Steven Cui"
 __copyright__ = "Copyright 2016, The University of Chicago"
@@ -15,19 +16,20 @@ __version__ = tRNASeqTools.__version__
 __maintainer__ = "Steven Cui"
 __email__ = "stevencui729@gmail.com"
 
-
 class ExtractorStats:
     """This class handles keeping track of extraction statistics."""
-
-    def __init__(self):
+    
+    def __init__(self, guidelines):
         """Initializes statistics."""
         self.total_seqs = 0
         self.type_I_seqs = 0
         self.type_II_seqs = 0
-        self.type_I_match_dict = {8:0, 9:0}
+        self.type_I_match_dict = {}
         self.type_II_match_dict = {}
         self.subseq_match = 0
-        for x in range (16, 27):
+        for x in guidelines[0]:
+            self.type_I_match_dict[x] = 0
+        for x in guidelines[1]:
             self.type_II_match_dict[x] = 0
 
     def format_line(self, label, value, level, padding = 55):
@@ -65,134 +67,65 @@ class ExtractorStats:
 
 class Extractor:
     """This class handles the extraction of info from tRNAs"""
-
+    
     def __init__(self):
         """Initializes variables for the extractor"""
         self.extractor_stats_file = ""
+        self.loop_guidelines = filters.IsTRNA("").getAnticodonGuidelines()
+        self.extractor_stats = ExtractorStats([self.loop_guidelines[2], self.loop_guidelines[3]])
 
-        self.extractor_stats = ExtractorStats()
+        self.allowed_pairings = {"G":["C", "T"], "T":["A", "G"], "C":["G"], "A":["T"]}
 
 
     def pair_check(self, a_arm):
         """Checks a given anticodon arm for valid pairing"""
         pair_seg_length = 5
         total_mismatch = 0
-        allowed_pairings = {"G":["C", "T"],
-            "T":["A", "G"],
-            "C":["G"],
-            "A":["T"]}
         
         for x in range(pair_seg_length):
-            if a_arm[-(x + 1)] not in allowed_pairings[a_arm[x]]:
+            if a_arm[-(x + 1)] not in self.allowed_pairings[a_arm[x]]:
                 total_mismatch += 1
-        return total_mismatch < 2
+        return total_mismatch < self.loop_guidelines[0] + 1
 
 
     def get_anticodon(self, a_arm):
         """Takes a given anticodon and returns the anticodon"""
         a_loop = a_arm[5:11]
         anticodon = ""
-        if a_loop[1] == "T" and (a_loop[5] == "A" or a_loop[5] == "G"):
+        if a_loop[1] in self.loop_guidelines[1][0] and a_loop[5] in self.loop_guidelines[1][1]:
             anticodon = a_loop[2:5]
         return anticodon
 
 
-    def extract_anticodon(self, seq):
+    def extract_anticodon(self, seq, fullLength):
         """Takes a given sequence and checks rules to find the anticodon, and
         returns the anticodon if there is one.
         """
         self.extractor_stats.total_seqs += 1
         length = len(seq)
-        anticodon_arm_start = 24 + 8 + 17
-        anticodon_arm_end = 24 + 8
+        anticodon_arm_start = 24 + 17
+        anticodon_arm_end = 24
         anticodon_list = []
 
-        if lev.distance("GTTC", seq[-24:-20]) < 2:
-            # handles type I full-length seqs
-            if length < 78:
-                # checks if there is an anticodon at a distance of 9
-                if self.pair_check(seq[-(anticodon_arm_start +
-                        1):-(anticodon_arm_end + 1)]):
-                    anticodon = self.get_anticodon(seq[-(anticodon_arm_start + 1):
-                        -(anticodon_arm_end + 1)])
+        # handles type I full-length seqs
+        if fullLength and length < 78 or not fullLength and length > 50:
+            for x in self.loop_guidelines[2]:
+                if self.pair_check(seq[-(anticodon_arm_start + x):-(anticodon_arm_end + x)]):
+                    anticodon = self.get_anticodon(seq[-(anticodon_arm_start + x):-(anticodon_arm_end + x)])
                     if len(anticodon) > 0:
-                        self.extractor_stats.type_I_match_dict[9] += 1
+                        self.extractor_stats.type_I_match_dict[x] += 1
                         self.extractor_stats.type_I_seqs += 1
                         anticodon_list.append(anticodon)
-                # checks if there is an anticodon at a distance of 8
-                if self.pair_check(seq[-anticodon_arm_start: -anticodon_arm_end]):
-                    anticodon = self.get_anticodon(seq[-anticodon_arm_start: -anticodon_arm_end])
-                    if len(anticodon) > 0:
-                        self.extractor_stats.type_I_match_dict[8] += 1
-                        self.extractor_stats.type_I_seqs += 1
-                        anticodon_list.append(anticodon)
-            # handles type II full-length seqs
-            elif length > 81:
-                for x in range(16, 27):
-                    anticodon_arm_start = 24 + x + 17
-                    anticodon_arm_end = 24 + x
-                 
-                    if self.pair_check(seq[-anticodon_arm_start:
-                        -anticodon_arm_end]):
-                        anticodon = self.get_anticodon(seq[-anticodon_arm_start: -anticodon_arm_end])
-                        if len(anticodon) > 0:
-                            self.extractor_stats.type_II_match_dict[x] += 1
-                            self.extractor_stats.type_II_seqs += 1
-                            anticodon_list.append(anticodon)
-                        else:
-                            continue
-        else:
-            print("error: GTTC didn't match")
-            print(seq[-24:-20])
 
-        return anticodon_list
-
-    
-    def extract_anticodon_not_full_length(self, seq):
-        """Takes a given sequence (not full length) and checks rules to find
-        the anticodon, and returns the anticodon if there is one.
-        """
-        self.extractor_stats.total_seqs += 1
-        length = len(seq)
-        anticodon_arm_start = 24 + 8 + 17
-        anticodon_arm_end = 24 + 8
-        anticodon_list = []
-
-        if lev.distance("GTTC", seq[-24:-20]) < 2:
-            if length > 50:
-                # checks if there is an anticodon at a distance of 9
-                if self.pair_check(seq[-(anticodon_arm_start +
-                        1):-(anticodon_arm_end + 1)]):
-                    anticodon = self.get_anticodon(seq[-(anticodon_arm_start + 1):
-                        -(anticodon_arm_end + 1)])
+        # handles type II full-length seqs
+        if fullLength and length > 81 or not fullLength and length > 67:
+            for x in self.loop_guidelines[3]:
+                if self.pair_check(seq[-(anticodon_arm_start + x):-(x + anticodon_arm_end)]):
+                    anticodon = self.get_anticodon(seq[-(anticodon_arm_start + x): -(anticodon_arm_end + x)])
                     if len(anticodon) > 0:
-                        self.extractor_stats.type_I_match_dict[9] += 1
-                        self.extractor_stats.type_I_seqs += 1
+                        self.extractor_stats.type_II_match_dict[x] += 1
+                        self.extractor_stats.type_II_seqs += 1
                         anticodon_list.append(anticodon)
-                # checks if there is an anticodon at a distance of 8
-                if self.pair_check(seq[-anticodon_arm_start: -anticodon_arm_end]):
-                    anticodon = self.get_anticodon(seq[-anticodon_arm_start: -anticodon_arm_end])
-                    if len(anticodon) > 0:
-                        self.extractor_stats.type_I_match_dict[8] += 1
-                        self.extractor_stats.type_I_seqs += 1
-                        anticodon_list.append(anticodon)
-            if length > 67:
-                for x in range(16, 27):
-                    anticodon_arm_start = 24 + x + 17
-                    anticodon_arm_end = 24 + x
-                    
-                    if self.pair_check(seq[-anticodon_arm_start:
-                        -anticodon_arm_end]):
-                        anticodon = self.get_anticodon(seq[-anticodon_arm_start: -anticodon_arm_end])
-                        if len(anticodon) > 0:
-                            self.extractor_stats.type_II_match_dict[x] += 1
-                            self.extractor_stats.type_II_seqs += 1
-                            anticodon_list.append(anticodon)
-                        else:
-                            continue
-        else:
-            print("error: GTTC didn't match")
-            print(seq[-24:-20])
 
         return anticodon_list
 

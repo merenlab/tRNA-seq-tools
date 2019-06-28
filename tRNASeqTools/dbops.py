@@ -8,6 +8,7 @@ import tRNASeqTools
 import tRNASeqTools.db as db
 import tRNASeqTools.tables as t
 import tRNASeqTools.terminal as terminal
+import tRNASeqTools.filters as filters
 
 
 __author__ = "Steven Cui"
@@ -137,27 +138,34 @@ class tRNADatabase:
                         ('total_passed', 'Total passed as tRNA seq', 'green'),
                         ('total_full_length', 'Total full length tRNA seqs', 'green'),
                         ('total_rejected', 'Total rejected', 'red'),
-                        ('short_rejected', 'Rejected due to length', None),
-                        ('acceptor_seq_rejected', 'Rejected due to acceptor seq', None),
-                        ('t_loop_seq_rejected', 'Rejected due to t-loop seq', None),
-                        ('both_rejected', 'Rejected due to both', None),
-                        ('no_divergence', 'No divergence', None),
-                        ('t_loop_divergence', 'Divergence at t-loop', None),
-                        ('div_at_0', 't-loop divergence at pos 0', None),
-                        ('div_at_1', 't-loop divergence at pos 1', None),
-                        ('div_at_2', 't-loop divergence at pos 2', None),
-                        ('div_at_3', 't-loop divergence at pos 3', None),
-                        ('div_at_8', 't-loop divergence at pos 8', None),
-                        ('acceptor_divergence', 'Divergence at acceptor', None),
-                        ('div_at_neg_1', 'Acceptor divergence at pos -1', None),
-                        ('div_at_neg_2', 'Acceptor divergence at pos -2', None),
-                        ('div_at_neg_3', 'Acceptor divergence at pos -3', None)]
+                        ('anticodon_unknown', 'Total with an unknown anticodon', None)]
+##                        ('short_rejected', 'Rejected due to short length', None),
+##                        ('long_rejected', 'Rejected due to long length', None),
+##                        ('acceptor_seq_rejected', 'Rejected due to acceptor seq', None),
+##                        ('t_loop_seq_rejected', 'Rejected due to t-loop seq', None),
+##                        ('both_rejected', 'Rejected due to both', None),
+##                        ('no_divergence', 'No divergence', None),
+##                        ('t_loop_divergence', 'Divergence at t-loop', None),
+####                        ('div_at_0', 't-loop divergence at pos 0', None),
+####                        ('div_at_1', 't-loop divergence at pos 1', None),
+####                        ('div_at_2', 't-loop divergence at pos 2', None),
+####                        ('div_at_3', 't-loop divergence at pos 3', None),
+####                        ('div_at_8', 't-loop divergence at pos 8', None),
+##                        ('acceptor_divergence', 'Divergence at acceptor', None)]
+##                        ('div_at_neg_1', 'Acceptor divergence at pos -1', None),
+##                        ('div_at_neg_2', 'Acceptor divergence at pos -2', None),
+##                        ('div_at_neg_3', 'Acceptor divergence at pos -3', None)]
 
+        for elem in filters.IsTRNA("").getFilters():
+            pretty_names.append((str(elem), "Failed at " + str(elem), None))
         for key, label, color in pretty_names:
-            if color:
-                self.run.info(label, self.stats[key], mc=color)
-            else:
-                self.run.info(label, self.stats[key])
+            try:
+                if color:
+                    self.run.info(label, self.stats[key], mc=color)
+                else:
+                    self.run.info(label, self.stats[key])
+            except KeyError:
+                self.run.info(label, 0)
 
 
 class TableFortRNASequences:
