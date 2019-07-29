@@ -1,36 +1,61 @@
 #Filters:
 
 import os
+import re
+
+import tRNASeqTools.extractor as extractor
 
 class IsTRNA:
 
     def __init__(self, output_path):
-        self.ANTICODON_LOOP_GUIDELINES = [0, 0, 0, 0]
+        self.ANTICODON_LOOP_GUIDELINES = [0, (('T'), ('A', 'G')), [], [], 0]
         self.allowed_pairings = {"G":("C", "T"), "T":("A", "G"), "C":("G"), "A":("T")}
         self.sub_size = 24
         self.output_path = output_path + "/filteredSequences/"
-        self.T_LOOP_AND_ACCEPTOR_GUIDELINES = [[], 0]
-        self.SET_UP_FILTERS = {"Allow_one_mismatch_in_the_anticodon_pairs": self.change_anticodon_loop_guidelines(0, 1),
-                               "Positions_34_and_37": self.change_anticodon_loop_guidelines(1, (('T'), ('A', 'G'))),
-                               "Type_I_length_between_8_and_9": self.change_anticodon_loop_guidelines(2, [8, 9]),
-                               "Type_II_length_between_16_and_27": self.change_anticodon_loop_guidelines(3, range(16, 27)),
-                               "require_T_Loop_G_at_0": self.change_T_and_acc_guidelines(0, (0, "G")),
-                               "require_T_Loop_T_at_1": self.change_T_and_acc_guidelines(0, (1, "T")),
-                               "require_T_Loop_T_at_2": self.change_T_and_acc_guidelines(0, (2, "T")),
-                               "require_T_Loop_C_at_3": self.change_T_and_acc_guidelines(0, (3, "C")),
-                               "require_T_Loop_C_at_8": self.change_T_and_acc_guidelines(0, (8, "C")),
-                               "require_acceptor_C_at_-3": self.change_T_and_acc_guidelines(0, (-3, "C")),
-                               "require_acceptor_C_at_-2": self.change_T_and_acc_guidelines(0, (-2, "C")),
-                               "require_acceptor_A_at_-1": self.change_T_and_acc_guidelines(0, (-1, "A")),
-                               "Allow_one_mismatch_in_T-loop_and_acceptor": self.change_T_and_acc_guidelines(1, 1),
+        self.T_LOOP_AND_ACCEPTOR_GUIDELINES = [[], 0, 0]
+        self.SET_UP_FILTERS = {"Allow_one_mismatch_in_the_anticodon_pairs": self.change_anticodon_loop_guidelines(0, 1), #Canonical 
+                               "Positions_34_and_37": self.change_anticodon_loop_guidelines(1, (('T'), ('A', 'G'))), #Canonical 
+##                               "Anticodon_arm_starting_pos_at_11": self.change_anticodon_loop_guidelines(4, 11),
+##                               "Anticodon_arm_starting_pos_at_24": self.change_anticodon_loop_guidelines(4, 24), #Canonical 
+##                               "Type_I_length_between_8_and_9": self.change_anticodon_loop_guidelines(2, [8, 9]), #Canonical 
+##                               "Type_II_length_between_16_and_27": self.change_anticodon_loop_guidelines(3, range(16, 27)), #Canonical 
+                               "T_region_length_between_4_and_20": self.change_anticodon_loop_guidelines(2, range(4, 21)),
+##                               "require_T_Loop_G_at_0": self.change_T_and_acc_guidelines(0, (0, "G")), #Canonical 
+##                               "require_T_Loop_T_at_1": self.change_T_and_acc_guidelines(0, (1, "T")), #Canonical 
+##                               "require_T_Loop_T_at_2": self.change_T_and_acc_guidelines(0, (2, "T")), #Canonical 
+##                               "require_T_Loop_C_at_3": self.change_T_and_acc_guidelines(0, (3, "C")), #Canonical 
+##                               "require_T_Loop_C_at_8": self.change_T_and_acc_guidelines(0, (8, "C")), #Canonical 
+                               "require_acceptor_C_at_-3": self.change_T_and_acc_guidelines(0, (-3, "C")), #Canonical 
+                               "require_acceptor_C_at_-2": self.change_T_and_acc_guidelines(0, (-2, "C")), #Canonical 
+                               "require_acceptor_A_at_-1": self.change_T_and_acc_guidelines(0, (-1, "A")), #Canonical 
+##                               "Allow_one_mismatch_in_T-loop_and_acceptor": self.change_T_and_acc_guidelines(1, 1), #Canonical 
+                               "Allow_no_mismatches_in_T-loop_and_acceptor": self.change_T_and_acc_guidelines(1, 0),
+                               "Require_Acceptor_Stem_Matching_with_one_mismatch":  self.change_T_and_acc_guidelines(2, (True, 2))
                                }
-        self.FILTERS = {"Longer_than_24": lambda seq: len(seq) > 24,
-                        "Shorter_than_200": lambda seq: len(seq) < 200,
-             ##           "Anticodon_is_known": self.isAnticodonKnown,
-                        "T-Loop_and_acceptor are acceptable":  self.t_loop_and_acceptor}
+        self.FILTERS = {"Longer_than_30": lambda seq: len(seq) > 30, #Canonical: 24
+                        "Shorter_than_200": lambda seq: len(seq) < 61, #Canonical
+                        "Anticodon_is_known": self.isAnticodonKnown,
+                        "T_loop_and_acceptor_is_acceptable":  self.t_loop_and_acceptor, #Canonical
+                        "D_region_and_T_region_acceptable_length": self.check_D_and_T_region_lengths
+                        }
 
         for elem in self.SET_UP_FILTERS:
             self.SET_UP_FILTERS[elem]
+        if self.T_LOOP_AND_ACCEPTOR_GUIDELINES[2] == 0:
+            self.T_LOOP_AND_ACCEPTOR_GUIDELINES = [False]
+
+        self.ANTICODON_LOOP_GUIDELINES[4] = 11
+
+        self.D_region_range = []
+        for i in range(4, 17):
+            self.D_region_range.append(i)
+        for i in range(len(self.D_region_range)):
+            self.D_region_range[i] += 7 + 6
+        self.T_region_range = []
+        for i in range(4, 21):
+            self.T_region_range.append(i)
+        for j in range(len(self.T_region_range)):
+            self.T_region_range[j] = -(self.T_region_range[j]  + 10 + 5)
         
         FILTER_DESCRIPTIONS = {"Allow_one_mismatch_in_the_anticodon_pairs": "This filter allows a single mismatch when paring the anticodon stem",
                                "Positions_34_and_37": "This filter requires that position 34 (right before the anticodon) is a T, and position 37 (right after the anticodon) is an A or G",
@@ -58,6 +83,7 @@ class IsTRNA:
     
     def istRNA(self, seq, name):
         problems = []
+        self.anticodon = []
         self.name = name
         for filt in self.FILTERS:
             if not self.FILTERS[filt](seq):
@@ -70,41 +96,22 @@ class IsTRNA:
 
     def getAnticodonGuidelines(self):
         return self.ANTICODON_LOOP_GUIDELINES
-
+    
     def isAnticodonKnown(self, seq):
-        anticodon = ""
-        length = len(seq)
-        anticodon_arm_start = 24 + 17
-        anticodon_arm_end = 24
-        fullLength = len(seq) > 70 and len(seq) < 100 and seq[7] == "T" and seq[13] == "A"
-        if fullLength and length < 78 or not fullLength and length > 50:
-            for x in self.ANTICODON_LOOP_GUIDELINES[2]:
-                if pair_check(seq[-(anticodon_arm_start + x):-(anticodon_arm_end + x)]):
-                    if get_anticodon(seq[-(anticodon_arm_start + x):-(anticodon_arm_end + x)]):
-                        return True
-        if fullLength and length > 81 or not fullLength and length > 67:
-            for x in self.ANTICODON_LOOP_GUIDELINES[3]:
-                if pair_check(seq[-(anticodon_arm_start + x):-(anticodon_arm_end + x)]):
-                    if get_anticodon(seq[-(anticodon_arm_start + x): -(anticodon_arm_end + x)]):
-                        return True
-        return False
-
-    def pair_check(self, a_arm):
-        total_mismatch = 0
-        
-        for x in range(5):
-            if a_arm[-(x + 1)] not in self.allowed_pairings[a_arm[x]]:
-                total_mismatch += 1
-        return total_mismatch < self.ANTICODON_LOOP_GUIDELINES[0] + 1
-
-
-    def get_anticodon(self, a_arm):
-        a_loop = a_arm[5:11]
-        anticodon = ""
-        if a_loop[1] in self.ANTICODON_LOOP_GUIDELINES[1][0] and a_loop[5] in self.ANTICODON_LOOP_GUIDELINES[1][1]:
-            return True
-        return False
-
+        if self.anticodon == []:
+            self.extractor = extractor.Extractor()
+            fullLength = len(seq) > 70 and len(seq) < 100 and seq[7] == "T" and seq[13] == "A"
+            self.anticodon = self.extractor.extract_anticodon(seq, fullLength)
+        return not self.anticodon == []
+            
+    def check_D_and_T_region_lengths(self, seq):
+        if self.isAnticodonKnown(seq):
+            for anti in self.anticodon:
+                for pos34 in self.ANTICODON_LOOP_GUIDELINES[1][0]:
+                    for elem in [m.start() for m in re.finditer(pos34 + anti, seq)]:
+                        if elem in self.D_region_range and elem - len(seq) in self.T_region_range:
+                            return True
+        return False     
 
     def get_t_loop_and_acceptor_guidelines(self):
         return self.T_LOOP_AND_ACCEPTOR_GUIDELINES
@@ -117,7 +124,9 @@ class IsTRNA:
 
     def t_loop_and_acceptor(self, seq):
         length = len(seq)
-        shortestMissed = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        shortestMissed = [0]
+        for elem in self.T_LOOP_AND_ACCEPTOR_GUIDELINES:
+            shortestMissed.append(0)
         for i in range(length - self.sub_size + 1):
             sub_str = seq[-(i + self.sub_size):(length - i)]
             missed = []
@@ -125,7 +134,18 @@ class IsTRNA:
                 if sub_str[position_tuple[0]] != position_tuple[1]:
                     missed.append(position_tuple)
             if len(missed) < self.T_LOOP_AND_ACCEPTOR_GUIDELINES[1] + 1:
-                return True
+                if self.T_LOOP_AND_ACCEPTOR_GUIDELINES[2][0]:
+                    misses = 0 
+                    for j in range(7):
+                        if seq[j] not in self.allowed_pairings[seq[-5 - j]]:
+                            misses += 1
+                    if misses < self.T_LOOP_AND_ACCEPTOR_GUIDELINES[2][1]:
+                        return True
+                    else:
+                        open(self.output_path + "Require_Acceptor_Stem_Matching_with_one_mismatch", "a").write(self.name + "\n" + seq + "\n")
+        
+                else:
+                    return True
             if len(missed) < len(shortestMissed):
                 shortestMissed = missed
         for elem in shortestMissed:

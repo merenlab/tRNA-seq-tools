@@ -3,7 +3,7 @@
 """Classes to extract info from tRNA sequences."""
 
 import csv
-import Levenshtein as lev
+##import Levenshtein as lev
 
 import tRNASeqTools
 import tRNASeqTools.filters as filters
@@ -103,8 +103,8 @@ class Extractor:
         """
         self.extractor_stats.total_seqs += 1
         length = len(seq)
-        anticodon_arm_start = 24 + 17
-        anticodon_arm_end = 24
+        anticodon_arm_start = self.loop_guidelines[4] + 17
+        anticodon_arm_end = self.loop_guidelines[4]
         anticodon_list = []
 
         # handles type I full-length seqs
