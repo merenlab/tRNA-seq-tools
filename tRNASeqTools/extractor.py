@@ -3,7 +3,6 @@
 """Classes to extract info from tRNA sequences."""
 
 import csv
-##import Levenshtein as lev
 
 import tRNASeqTools
 import tRNASeqTools.filters as filters
@@ -74,7 +73,7 @@ class Extractor:
         self.loop_guidelines = filters.IsTRNA("").getAnticodonGuidelines()
         self.extractor_stats = ExtractorStats([self.loop_guidelines[2], self.loop_guidelines[3]])
 
-        self.allowed_pairings = {"G":["C", "T"], "T":["A", "G"], "C":["G"], "A":["T"]}
+        self.allowed_pairings = {"G":("C", "T"), "T":("A", "G"), "C":("G"), "A":("T"), "N": ()}
 
 
     def pair_check(self, a_arm):
