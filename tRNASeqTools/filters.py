@@ -32,8 +32,8 @@ class IsTRNA:
                                "Allow_no_mismatches_in_T-loop_and_acceptor": self.change_T_and_acc_guidelines(1, 0),
                                "Require_Acceptor_Stem_Matching_with_one_mismatch":  self.change_T_and_acc_guidelines(2, (True, 2))
                                }
-        self.FILTERS = {"Longer_than_30": lambda seq: len(seq) > 30, #Canonical: 24
-                        "Shorter_than_200": lambda seq: len(seq) < 61, #Canonical
+        self.FILTERS = {"Longer_than_30": lambda seq: len(seq) > 24, #Canonical: 24
+                        "Shorter_than_200": lambda seq: len(seq) < 200, #Canonical: 200
                         "Anticodon_is_known": self.isAnticodonKnown,
                         "T_loop_and_acceptor_is_acceptable":  self.t_loop_and_acceptor, #Canonical
                         "D_region_and_T_region_acceptable_length": self.check_D_and_T_region_lengths
@@ -85,7 +85,7 @@ class IsTRNA:
         self.anticodon = []
         self.name = name
 
-        #Finding the length of a potential 5' trail past the acceptor stem (only relevant for non-canonical searches)
+        #Finding the length of a potential 5' trail past the acceptor stem (only relevant for non-canonical)
         for n in range(len(seq) - 43):
             misses = 0 
             for j in range(7):

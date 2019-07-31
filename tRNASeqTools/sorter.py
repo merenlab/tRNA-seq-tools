@@ -211,50 +211,6 @@ class Sorter:
         return cur_seq_specs
 
 
-    def is_tRNA(self, seq, name):
-        """Takes a sequence and determines whether or not it matches the
-        criterion for being a tRNA
-##        """
-        is_tRNA_out = ()
-        sub_size = 24
-        length = len(seq)
-        cur_seq_specs = SeqSpecs()
-        cur_seq_specs.length = length
-        done = False
-        
-        problem = filters.istRNA(seq, name)
-        if problem != "":
-            self.stats_dict[problem] += 1
-        else:
-            #trying to determine length of trailer
-            for i in range(length - sub_size + 1):
-                if not done:
-                    sub_str = seq[-(i + sub_size):(length - i)]
-                    missed = []
-                    for position_tuple in filters.T_LOOP_AND_ACCEPTOR_GUIDELINES[0]:
-                        if sub_str[position_tuple[0]] != position_tuple[1]:
-                            missed.append(position_tuple)
-                    if len(missed) < filters.T_LOOP_AND_ACCEPTOR_GUIDELINES[1] + 1:
-                        for elem in missed:
-                            self.stats_dict[str(elem)] += 1
-                        if len(missed) == 0:
-                            self.stats_dict['no_divergence']
-                        cur_seq_specs.seq = seq
-                        cur_seq_specs.seq_sub = sub_str
-                        cur_seq_specs.t_loop_seq = sub_str[0:9]
-                        cur_seq_specs.acceptor_seq = sub_str[-3:]
-                        cur_seq_specs = self.handle_pass_seq(cur_seq_specs, i)
-                        done = True
-                        is_tRNA_out = (True, cur_seq_specs)
-            if not done:
-                done = True
-                cur_seq_specs = self.handle_pass_seq(cur_seq_specs, 0)
-                is_tRNA_out =  (True, cur_seq_specs)
-        if not done:
-            is_tRNA_out = (False, cur_seq_specs)
-        return is_tRNA_out
-
-
     def gen_sql_query_info_tuple(self):
         info_string_list = []
         info_string_list.append(self.total_seqs)
@@ -278,8 +234,12 @@ class Sorter:
 
         # an arbitrary max size to store and reset the buffer
         memory_max = 2000000
-        folder_output_path = self.output_db_path[:self.output_db_path.rfind("/")]
-        if not os.path.exists("./filteredSequences/"):
+        slash_index = self.output_db_path.rfind("/")
+        if slash_index == -1:
+            slash_index = self.output_db_path.rfind(".")
+        folder_output_path = self.output_db_path[:slash_index]
+        
+        if not os.path.exists(folder_output_path + "/filteredSequences/"):
             os.makedirs(folder_output_path + "/filteredSequences/")
         
         is_trna = filters.IsTRNA(folder_output_path)
@@ -312,7 +272,6 @@ class Sorter:
             length = len(seq)
             cur_seq_specs = SeqSpecs()
             cur_seq_specs.length = length
-            done = False
             
             problem = is_trna.istRNA(seq, input_fasta.id)
             if problem != "":
@@ -321,24 +280,23 @@ class Sorter:
             else:
                 #trying to determine length of trailer
                 for i in range(length - sub_size + 1):
-                    if not done:
-                        sub_str = seq[-(i + sub_size):(length - i)]
-                        missed = []
-                        for position_tuple in t_loop_guidelines[0]:
-                            if sub_str[position_tuple[0]] != position_tuple[1]:
-                                missed.append(position_tuple)
-                        if len(missed) < t_loop_guidelines[1] + 1:
-                            for elem in missed:
-                                self.stats_dict[str(elem)] += 1
-                            if len(missed) == 0:
-                                self.stats_dict['no_divergence']
-                            cur_seq_specs.seq = seq
-                            cur_seq_specs.seq_sub = sub_str
-                            cur_seq_specs.t_loop_seq = sub_str[0:9]
-                            cur_seq_specs.acceptor_seq = sub_str[-3:]
-                            cur_seq_specs = self.handle_pass_seq(cur_seq_specs, i)
-                            done = True
-                            results_buffer.append(('%s_%d' % (self.sample_name, input_fasta.pos), cur_seq_specs))
+                    sub_str = seq[-(i + sub_size):(length - i)]
+                    missed = []
+                    for position_tuple in t_loop_guidelines[0]:
+                        if sub_str[position_tuple[0]] != position_tuple[1]:
+                            missed.append(position_tuple)
+                    if len(missed) < t_loop_guidelines[1] + 1:
+                        for elem in missed:
+                            self.stats_dict[str(elem)] += 1
+                        if len(missed) == 0:
+                            self.stats_dict['no_divergence']
+                        cur_seq_specs.seq = seq
+                        cur_seq_specs.seq_sub = sub_str
+                        cur_seq_specs.t_loop_seq = sub_str[0:9]
+                        cur_seq_specs.acceptor_seq = sub_str[-3:]
+                        cur_seq_specs = self.handle_pass_seq(cur_seq_specs, i)
+                        results_buffer.append(('%s_%d' % (self.sample_name, input_fasta.pos), cur_seq_specs))
+                        break
 
 
 
