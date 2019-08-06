@@ -139,11 +139,6 @@ class tRNADatabase:
                         ('total_full_length', 'Total full length tRNA seqs', 'green'),
                         ('total_rejected', 'Total rejected', 'red'),
                         ('anticodon_unknown', 'Total with an unknown anticodon', None)]
-##                        ('short_rejected', 'Rejected due to short length', None),
-##                        ('long_rejected', 'Rejected due to long length', None),
-##                        ('acceptor_seq_rejected', 'Rejected due to acceptor seq', None),
-##                        ('t_loop_seq_rejected', 'Rejected due to t-loop seq', None),
-##                        ('both_rejected', 'Rejected due to both', None),
 ##                        ('no_divergence', 'No divergence', None),
 ##                        ('t_loop_divergence', 'Divergence at t-loop', None),
 ####                        ('div_at_0', 't-loop divergence at pos 0', None),
@@ -156,7 +151,7 @@ class tRNADatabase:
 ##                        ('div_at_neg_2', 'Acceptor divergence at pos -2', None),
 ##                        ('div_at_neg_3', 'Acceptor divergence at pos -3', None)]
 
-        for elem in filters.IsTRNA("").getFilters():
+        for elem in filters.IsTRNA("").getFilters()[0]:
             pretty_names.append((str(elem), "Failed at " + str(elem), None))
         for key, label, color in pretty_names:
             try:

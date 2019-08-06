@@ -164,7 +164,6 @@ class Sorter:
         """Takes a SeqSpecs class and tries to assign an anticodon to it"""
         anticodon = ",".join(self.extractor.extract_anticodon(cur_seq_specs.seq, cur_seq_specs.full_length))
         if anticodon == "":
-##            anticodon = "???"
             self.stats_dict['anticodon_unknown'] += 1
         cur_seq_specs.anticodon = anticodon
         
@@ -234,24 +233,22 @@ class Sorter:
 
         # an arbitrary max size to store and reset the buffer
         memory_max = 2000000
+
+        # the filteredSequences directory
         slash_index = self.output_db_path.rfind("/")
         if slash_index == -1:
             slash_index = self.output_db_path.rfind(".")
-        folder_output_path = self.output_db_path[:slash_index]
-        
-        if not os.path.exists(folder_output_path + "/filteredSequences/"):
-            os.makedirs(folder_output_path + "/filteredSequences/")
+        folder_output_path = self.output_db_path[:slash_index] + "/filteredSequences/"
+        if not os.path.exists(folder_output_path):
+            os.makedirs(folder_output_path)
         
         is_trna = filters.IsTRNA(folder_output_path)
         t_loop_guidelines = is_trna.get_t_loop_and_acceptor_guidelines()
-        
-
-        for elem in is_trna.getFilters():
-            temp = open(folder_output_path + "/filteredSequences/" + elem, "w")
-            temp.write("")
-        for elem in is_trna.getSetUpFilters():
-            temp = open(folder_output_path + "/filteredSequences/" + elem, "w")
-            temp.write("")
+        run_filters = is_trna.getFilters()
+        for i in range(2):
+            for elem in run_filters[i]:
+                temp = open(folder_output_path + elem, "w")
+                temp.write("")
         
         sub_size = 24
 

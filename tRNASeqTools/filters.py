@@ -11,32 +11,32 @@ class IsTRNA:
         self.ANTICODON_LOOP_GUIDELINES = [0, (('T'), ('A', 'G')), [], [], 0]
         self.allowed_pairings = {"G":("C", "T"), "T":("A", "G"), "C":("G"), "A":("T"), "N": ()}
         self.sub_size = 24
-        self.output_path = output_path + "/filteredSequences/"
+        self.output_path = output_path
         self.T_LOOP_AND_ACCEPTOR_GUIDELINES = [[], 0, 0]
         self.SET_UP_FILTERS = {"Allow_one_mismatch_in_the_anticodon_pairs": self.change_anticodon_loop_guidelines(0, 1), #Canonical 
                                "Positions_34_and_37": self.change_anticodon_loop_guidelines(1, (('T'), ('A', 'G'))), #Canonical 
-                               "Anticodon_arm_starting_pos_at_11": self.change_anticodon_loop_guidelines(4, 11),
-##                               "Anticodon_arm_starting_pos_at_24": self.change_anticodon_loop_guidelines(4, 24), #Canonical 
-##                               "Type_I_length_between_8_and_9": self.change_anticodon_loop_guidelines(2, [8, 9]), #Canonical 
-##                               "Type_II_length_between_16_and_27": self.change_anticodon_loop_guidelines(3, range(16, 27)), #Canonical 
-                               "T_region_length_between_4_and_20": self.change_anticodon_loop_guidelines(2, range(3, 25)),
-##                               "require_T_Loop_G_at_0": self.change_T_and_acc_guidelines(0, (0, "G")), #Canonical 
-##                               "require_T_Loop_T_at_1": self.change_T_and_acc_guidelines(0, (1, "T")), #Canonical 
-##                               "require_T_Loop_T_at_2": self.change_T_and_acc_guidelines(0, (2, "T")), #Canonical 
-##                               "require_T_Loop_C_at_3": self.change_T_and_acc_guidelines(0, (3, "C")), #Canonical 
-##                               "require_T_Loop_C_at_8": self.change_T_and_acc_guidelines(0, (8, "C")), #Canonical 
+##                               "Anticodon_arm_starting_pos_at_11": self.change_anticodon_loop_guidelines(4, 11),
+                               "Anticodon_arm_starting_pos_at_24": self.change_anticodon_loop_guidelines(4, 24), #Canonical 
+                               "Type_I_length_between_8_and_9": self.change_anticodon_loop_guidelines(2, [8, 9]), #Canonical 
+                               "Type_II_length_between_16_and_27": self.change_anticodon_loop_guidelines(3, range(16, 27)), #Canonical 
+##                               "T_region_length_between_4_and_20": self.change_anticodon_loop_guidelines(2, range(3, 25)),
+                               "require_T_Loop_G_at_0": self.change_T_and_acc_guidelines(0, (0, "G")), #Canonical 
+                               "require_T_Loop_T_at_1": self.change_T_and_acc_guidelines(0, (1, "T")), #Canonical 
+                               "require_T_Loop_T_at_2": self.change_T_and_acc_guidelines(0, (2, "T")), #Canonical 
+                               "require_T_Loop_C_at_3": self.change_T_and_acc_guidelines(0, (3, "C")), #Canonical 
+                               "require_T_Loop_C_at_8": self.change_T_and_acc_guidelines(0, (8, "C")), #Canonical 
                                "require_acceptor_C_at_-3": self.change_T_and_acc_guidelines(0, (-3, "C")), #Canonical 
                                "require_acceptor_C_at_-2": self.change_T_and_acc_guidelines(0, (-2, "C")), #Canonical 
                                "require_acceptor_A_at_-1": self.change_T_and_acc_guidelines(0, (-1, "A")), #Canonical 
-##                               "Allow_one_mismatch_in_T-loop_and_acceptor": self.change_T_and_acc_guidelines(1, 1), #Canonical 
-                               "Allow_no_mismatches_in_T-loop_and_acceptor": self.change_T_and_acc_guidelines(1, 0),
-                               "Require_Acceptor_Stem_Matching_with_one_mismatch":  self.change_T_and_acc_guidelines(2, (True, 2))
+                               "Allow_one_mismatch_in_T-loop_and_acceptor": self.change_T_and_acc_guidelines(1, 1), #Canonical 
+##                               "Allow_no_mismatches_in_T-loop_and_acceptor": self.change_T_and_acc_guidelines(1, 0),
+##                               "Require_Acceptor_Stem_Matching_with_one_mismatch":  self.change_T_and_acc_guidelines(2, (True, 2))
                                }
         self.FILTERS = {"Longer_than_30": lambda seq: len(seq) > 24, #Canonical: 24
                         "Shorter_than_200": lambda seq: len(seq) < 200, #Canonical: 200
-                        "Anticodon_is_known": self.isAnticodonKnown,
+##                        "Anticodon_is_known": self.isAnticodonKnown,
                         "T_loop_and_acceptor_is_acceptable":  self.t_loop_and_acceptor, #Canonical
-                        "D_region_and_T_region_acceptable_length": self.check_D_and_T_region_lengths
+##                        "D_region_and_T_region_acceptable_length": self.check_D_and_T_region_lengths
                         }
 
         self.D_region_range = list(range(5, 22))
@@ -44,12 +44,12 @@ class IsTRNA:
             self.D_region_range[i] += 13
         self.T_region_range = list(range(17, 25))
         for j in range(len(self.T_region_range)):
-            self.T_region_range[j] = -(self.T_region_range[j]  + 15)
+            self.T_region_range[j] = -(self.T_region_range[j]  + 22)
 
         for elem in self.SET_UP_FILTERS:
             self.SET_UP_FILTERS[elem]
         if self.T_LOOP_AND_ACCEPTOR_GUIDELINES[2] == 0:
-            self.T_LOOP_AND_ACCEPTOR_GUIDELINES = [False]
+            self.T_LOOP_AND_ACCEPTOR_GUIDELINES[2] = (False, 0)
         
         FILTER_DESCRIPTIONS = {"Allow_one_mismatch_in_the_anticodon_pairs": "This filter allows a single mismatch when paring the anticodon stem",
                                "Positions_34_and_37": "This filter requires that position 34 (right before the anticodon) is a T, and position 37 (right after the anticodon) is an A or G",
@@ -74,10 +74,7 @@ class IsTRNA:
                                }
 
     def getFilters(self):
-        return self.FILTERS
-
-    def getSetUpFilters(self):
-        return self.SET_UP_FILTERS
+        return (self.FILTERS, self.SET_UP_FILTERS)
     
     def istRNA(self, seq, name):
         problems = []
@@ -93,7 +90,6 @@ class IsTRNA:
                     misses += 1
             if misses < self.T_LOOP_AND_ACCEPTOR_GUIDELINES[2][1]:
                 self.D_region_shift = n
-
         #Running the filters
         for filt in self.FILTERS:
             if not self.FILTERS[filt](seq):
@@ -134,7 +130,7 @@ class IsTRNA:
 
     def t_loop_and_acceptor(self, seq):
         length = len(seq)
-        shortestMissed = [0] * (len(self.T_LOOP_AND_ACCEPTOR_GUIDELINES) + 1)
+        shortestMissed = [0] * (len(self.T_LOOP_AND_ACCEPTOR_GUIDELINES[0]) + 1)
         for i in range(length - self.sub_size + 1):
             sub_str = seq[-(i + self.sub_size):(length - i)]
             missed = []
